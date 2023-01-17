@@ -1,0 +1,62 @@
+import { Injectable } from '@nestjs/common';
+import { MailEntity } from './entity/mail.entity';
+
+@Injectable()
+export class MailService {
+
+  public sendInvoiceCreatedMail(
+    mailTo: string, 
+    billingId: string,
+    billingTo: string,
+    billingAmount: number,
+    billingDueDate: Date,
+  ): void {
+    const dueDateMessage: string = this.builDueDateMessage(billingDueDate);
+    const mailEntity: MailEntity = new MailEntity(
+      mailTo, 
+      'Boleto gerado com sucesso', 
+      `Olá ${billingTo}!\nO boleto '${billingId}' foi gerado no seu nome com o valor de R$${billingAmount.toFixed(2)}.\n` + dueDateMessage,
+    );
+
+    this.sendMail(mailEntity);
+  }
+
+  public sendPaymentReminderMail(
+    mailTo: string, 
+    billingId: string,
+    billingTo: string,
+    billingAmount: number,
+    billingDueDate: Date,
+  ): void {
+    const dueDateMessage: string = this.builDueDateMessage(billingDueDate);
+    const mailEntity: MailEntity = new MailEntity(
+      mailTo, 
+      'Lembrete: realize o pagamento do seu boleto', 
+      `Olá ${billingTo}!\nNão esqueça de realizar o pagamento do boleto '${billingId}' no valor de R$${billingAmount.toFixed(2)}.\n` + dueDateMessage,
+    );
+
+    this.sendMail(mailEntity);
+  }
+
+  private sendMail(mailEntity: MailEntity): void {
+    console.log(`
+      SendTo: ${mailEntity.mailTo} \n
+      Subject: ${mailEntity.subject} \n
+      Body: ${mailEntity.body} \n
+    `);
+  }
+
+  private builDueDateMessage(billingDueDate: Date): string {
+    const dayDueDate: number = billingDueDate.getDate();
+    const monthdueDate: number = (billingDueDate.getMonth() + 1);
+    const formattedDayDueDate: string = this.appendZeroToDateIfNeeded(dayDueDate);
+    const formattedMonthDueDate: string = this.appendZeroToDateIfNeeded(monthdueDate);
+
+    return `Voce tem até ${formattedDayDueDate}/${formattedMonthDueDate} para realizar o pagamento. Após essa data, o boleto será cancelado.`;
+  }
+
+  private appendZeroToDateIfNeeded(date: number): string {
+    return date <= 9 ? '0' + date.toString() : date.toString();
+  }
+
+}
