@@ -8,6 +8,7 @@ import { JobRepository } from './job.repository';
 export class JobService {
 
   public static READ_CSV_QUEUE: string = 'read_csv';
+  public static TRY_PAYMENT_QUEUE: string = 'try_payment';
 
   private readonly repository: JobRepository;
 
@@ -15,16 +16,16 @@ export class JobService {
     this.repository = new JobRepository(this.databaseService);
   }
 
-  public async createJob(queue: string, reference: string): Promise<JobEntity> {
-    const job: job = await this.repository.createJob(queue, reference);
+  public async createJob(queue: string, reference: string, input: string = ''): Promise<JobEntity> {
+    const job: job = await this.repository.createJob(queue, reference, input);
 
-    return new JobEntity(job.id, job.queue, job.reference, job.status);
+    return new JobEntity(job.id, job.queue, job.reference, job.status, job.input);
   }
 
   public async getPendingJobsFromQueue(queue: string): Promise<JobEntity[]> {
     const jobs: job[] = await this.repository.getPendingJobsFromQueue(queue);
 
-    return jobs.map((job: job) => {new JobEntity(job.id, job.queue, job.reference, job.status)});
+    return jobs.map((job: job) => {return new JobEntity(job.id, job.queue, job.reference, job.status, job.input)});
   }
 
 }

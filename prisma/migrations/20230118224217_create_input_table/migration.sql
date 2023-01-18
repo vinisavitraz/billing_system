@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `job` ADD COLUMN `input` VARCHAR(250) NOT NULL DEFAULT '';

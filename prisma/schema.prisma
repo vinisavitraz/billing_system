@@ -27,6 +27,7 @@ model job {
   queue            String        @db.VarChar(50)
   reference        String        @db.VarChar(100)
   status           String        @db.VarChar(20)
+  input            String        @db.VarChar(350) @default("")
 
   @@index([queue, status])
 }
