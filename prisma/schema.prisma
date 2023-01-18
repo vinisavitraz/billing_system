@@ -25,9 +25,8 @@ model billing {
 model job {
   id               Int           @id @default(autoincrement())
   queue            String        @db.VarChar(50)
-  execute_at       DateTime      @db.DateTime(0)
-  reference        String        @db.VarChar(20)
+  reference        String        @db.VarChar(100)
   status           String        @db.VarChar(20)
 
-  @@index([status, execute_at])
+  @@index([queue, status])
 }
