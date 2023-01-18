@@ -1,7 +1,33 @@
+import { job } from "@prisma/client";
 import { DatabaseService } from "src/database/database.service";
 
 export class JobRepository {
 
-  constructor(private readonly databaseService: DatabaseService) {}
+  private readonly connection: DatabaseService;
+
+  constructor(databaseService: DatabaseService) {
+      this.connection = databaseService;
+  }
   
+  public async createJob(
+    queue: string,
+    reference: string
+  ): Promise<job> {
+    return await this.connection.job.create({
+      data: {
+        queue: queue,
+        reference: reference,
+        status: 'pending',
+      },
+    });
+  }
+
+  public async getPendingJobsFromQueue(queue: string): Promise<job[]> {
+    return await this.connection.job.findMany({
+      where: {
+        queue: queue,
+        status: 'pending',
+      },
+    });
+  }
 }
