@@ -11,13 +11,15 @@ export class JobRepository {
   
   public async createJob(
     queue: string,
-    reference: string
+    reference: string,
+    input: string,
   ): Promise<job> {
     return await this.connection.job.create({
       data: {
         queue: queue,
         reference: reference,
         status: 'pending',
+        input: input,
       },
     });
   }

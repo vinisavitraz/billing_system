@@ -1,15 +1,15 @@
 export class BillingEntity {
 
-  private name: string;
-  private governmentId: string;
-  private email: string;
-  private id: string;
-  private amount: number;
-  private dueDate: Date;
-  private status: string;
-  private paidAt: Date | null;
-  private paidAmount: number | null;
-  private paidBy: string | null;
+  readonly name: string;
+  readonly governmentId: string;
+  readonly email: string;
+  readonly id: string;
+  readonly amount: number;
+  readonly dueDate: Date;
+  readonly status: string;
+  readonly paidAt: Date | null;
+  readonly paidAmount: number | null;
+  readonly paidBy: string | null;
   
   constructor(
     name: string,
