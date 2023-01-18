@@ -1,13 +1,13 @@
 export class JobEntity {
 
-  private id: string;
+  private id: number;
   private queue: string;
   private executeAt: Date;
   private reference: string;
   private status: string;
 
   constructor(
-    id: string,
+    id: number,
     queue: string,
     executeAt: Date,
     reference: string,

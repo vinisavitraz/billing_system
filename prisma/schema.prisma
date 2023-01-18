@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model billing {
+  id               String        @id @db.VarChar(20)
+  government_id    String        @db.VarChar(11)
+  email            String        @db.VarChar(100)
+  name             String        @db.VarChar(200)
+  amount           Decimal
+  due_date         DateTime      @db.DateTime(0)
+  status           String        @db.VarChar(20)
+  paid_at          DateTime?     @db.DateTime(0)
+  paid_amount      Decimal?
+  paid_by          String?       @db.VarChar(200)
+
+  @@index([status])
+}
+
+model job {
+  id               Int           @id @default(autoincrement())
+  queue            String        @db.VarChar(50)
+  execute_at       DateTime      @db.DateTime(0)
+  reference        String        @db.VarChar(20)
+  status           String        @db.VarChar(20)
+
+  @@index([status, execute_at])
+}
