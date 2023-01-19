@@ -10,10 +10,10 @@ export class BillingRepository {
       this.connection = databaseService;
   }
 
-  public async findBillingByDebtId(debtId: string): Promise<billing | null> {
+  public async findBillingById(billingId: string): Promise<billing | null> {
     return await this.connection.billing.findFirst({
       where: {
-        debt_id: debtId, 
+        id: billingId, 
       },
     });
   }
@@ -45,7 +45,7 @@ export class BillingRepository {
     });
   }
 
-  public async findBillingPayments(billingId: number): Promise<payment[]> {
+  public async findBillingPayments(billingId: string): Promise<payment[]> {
     return await this.connection.payment.findMany({
       where: {
         billing_id: billingId, 
@@ -64,7 +64,7 @@ export class BillingRepository {
     paidAmount: number,
     paidAt: Date,
     paidBy: string,
-    billingId: number,
+    billingId: string,
   ): Promise<payment> {
     return await this.connection.payment.create({
         data: {
@@ -76,7 +76,7 @@ export class BillingRepository {
     });
   }
 
-  public async updateBillingStatus(billingId: number, newStatus: string): Promise<billing> {
+  public async updateBillingStatus(billingId: string, newStatus: string): Promise<billing> {
     return await this.connection.billing.update({
       where: {
         id: billingId,

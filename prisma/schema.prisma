@@ -8,8 +8,7 @@ datasource db {
 }
 
 model billing {
-  id               Int           @id @default(autoincrement())
-  debt_id          String        @db.VarChar(20)
+  id               String        @id @db.VarChar(40)
   government_id    String        @db.VarChar(11)
   email            String        @db.VarChar(100)
   name             String        @db.VarChar(200)
@@ -26,7 +25,7 @@ model payment {
   paid_at          DateTime      @db.DateTime(0)
   paid_amount      Decimal
   paid_by          String        @db.VarChar(200)
-  billing_id       Int
+  billing_id       String
   billing          billing       @relation(fields: [billing_id], references: [id])
 }
 
