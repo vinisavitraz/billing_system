@@ -32,4 +32,16 @@ export class JobRepository {
       },
     });
   }
+
+  public async updateJobStatus(jobId: number, newStatus: string): Promise<job> {
+    return await this.connection.job.update({
+      where: {
+        id: jobId,
+      },
+      data: {
+        status: newStatus,
+      },
+    });
+  }
+
 }
