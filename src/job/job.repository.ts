@@ -4,7 +4,7 @@ import { JobEntity } from "./entity/job.entity";
 
 export class JobRepository {
 
-  private readonly connection: DatabaseService;
+  readonly connection: DatabaseService;
 
   constructor(databaseService: DatabaseService) {
       this.connection = databaseService;

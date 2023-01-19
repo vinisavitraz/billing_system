@@ -89,6 +89,7 @@
       "main.ts",
       ".js",
       "database",
+      "interceptor",
       "app.e2e-spec.ts"
     ],
     "testEnvironment": "node"
