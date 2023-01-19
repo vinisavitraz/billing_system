@@ -117,10 +117,12 @@ export class BillingService {
     const billingsInput: object[] = await this.mapFileContentToBillings(fileRowsJson);
 
     if (billingsInput.length > BillingService.BATCH_SIZE) {
-      console.log('File will be processed in batches.');
+      console.log('Processing file in batches.');
       for (let i = 0; i < billingsInput.length; i += BillingService.BATCH_SIZE) {
-        await this.createNewBillings(billingsInput.slice(i, i + BillingService.BATCH_SIZE));
+        const batch: object[] = billingsInput.slice(i, i + BillingService.BATCH_SIZE);
+        await this.createNewBillings(batch);
       }
+      console.log('File processed with success.');
       return;
     }
     
