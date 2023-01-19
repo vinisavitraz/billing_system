@@ -1,5 +1,6 @@
 import { job } from "@prisma/client";
 import { DatabaseService } from "src/database/database.service";
+import { JobEntity } from "./entity/job.entity";
 
 export class JobRepository {
 
@@ -12,29 +13,31 @@ export class JobRepository {
   public async createJob(
     queue: string,
     reference: string,
-    input: string,
-  ): Promise<job> {
-    return await this.connection.job.create({
+  ): Promise<JobEntity> {
+    const job: job = await this.connection.job.create({
       data: {
         queue: queue,
         reference: reference,
         status: 'pending',
-        input: input,
       },
     });
+
+    return new JobEntity(job.id, job.queue, job.reference, job.status);
   }
 
-  public async getPendingJobsFromQueue(queue: string): Promise<job[]> {
-    return await this.connection.job.findMany({
+  public async getPendingJobsFromQueue(queue: string): Promise<JobEntity[]> {
+    const jobs: job[] = await this.connection.job.findMany({
       where: {
         queue: queue,
         status: 'pending',
       },
     });
+
+    return jobs.map((job: job) => {return new JobEntity(job.id, job.queue, job.reference, job.status)});
   }
 
-  public async updateJobStatus(jobId: number, newStatus: string): Promise<job> {
-    return await this.connection.job.update({
+  public async updateJobStatus(jobId: number, newStatus: string): Promise<JobEntity> {
+    const job: job = await this.connection.job.update({
       where: {
         id: jobId,
       },
@@ -42,6 +45,8 @@ export class JobRepository {
         status: newStatus,
       },
     });
+
+    return new JobEntity(job.id, job.queue, job.reference, job.status);
   }
 
 }
