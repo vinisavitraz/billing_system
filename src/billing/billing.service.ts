@@ -45,8 +45,7 @@ export class BillingService {
     }
   }
   
-  //@Cron(CronExpression.EVERY_DAY_AT_1AM)
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron(CronExpression.EVERY_DAY_AT_1AM)
   private async checkBillingsDueDateAndUpdateStatus(): Promise<void> {
     const remindAfterDate: Date = new Date();
     remindAfterDate.setDate(remindAfterDate.getDate() - BillingService.REMAINING_DAYS_TO_REMINDER_PAYMENT);
@@ -57,7 +56,7 @@ export class BillingService {
       const billing: billing = expiringBillings[i];
       this.mailService.sendPaymentReminderMail(
         billing.email,
-        billing.debt_id,
+        billing.id,
         billing.name,
         billing.amount.toNumber(),
         billing.due_date,
@@ -67,7 +66,6 @@ export class BillingService {
     const expiredBillings: billing[] = await this.repository.findExpiredBillings();
     
     for (let i = 0; i < expiredBillings.length; i++) {
-      
       const billing: billing = expiredBillings[i];
       await this.repository.updateBillingStatus(billing.id, BillingService.EXPIRED);
     }
@@ -80,10 +78,10 @@ export class BillingService {
   }
 
   public async executePayment(paymentEntity: PaymentEntity): Promise<ExecutePaymentResponse> {
-    let billing: billing | null = await this.findBillingByDebtIdOrCry(paymentEntity.debtId);
+    let billing: billing | null = await this.findBillingByIdOrCry(paymentEntity.debtId);
 
     this.validateBillingState(billing, paymentEntity);
-    this.validateDebtAndPaymentAmounts(billing.amount.toNumber(), paymentEntity.paidAmount);
+    this.validateBillingAndPaymentAmounts(billing.amount.toNumber(), paymentEntity.paidAmount);
 
     const payments: payment[] = await this.repository.findBillingPayments(billing.id);
     let paymentRemainingAmount: number = billing.amount.toNumber();
@@ -92,7 +90,7 @@ export class BillingService {
       paymentRemainingAmount = this.calculatePaymentRemainingAmount(paymentRemainingAmount, payments);
     }
 
-    this.validateDebtAndPaymentAmounts(paymentRemainingAmount, paymentEntity.paidAmount);
+    this.validateBillingAndPaymentAmounts(paymentRemainingAmount, paymentEntity.paidAmount);
 
     if (paymentEntity.paidAmount === paymentRemainingAmount) {
       await this.createPayment(billing.id, paymentEntity);
@@ -141,12 +139,12 @@ export class BillingService {
     console.log('File processed with success.');
   }
 
-  private async findBillingByDebtIdOrCry(debtId: string): Promise<billing> {
-    const billing: billing | null = await this.repository.findBillingByDebtId(debtId);
+  private async findBillingByIdOrCry(billingId: string): Promise<billing> {
+    const billing: billing | null = await this.repository.findBillingById(billingId);
 
     if (!billing) {
       throw new HttpException(
-        'Debt with ID `' + debtId + '` not found.',
+        'Billing with ID `' + billingId + '` not found.',
         HttpStatus.NOT_FOUND, 
       );
     }
@@ -170,8 +168,8 @@ export class BillingService {
     }
   }
 
-  private validateDebtAndPaymentAmounts(debtAmount: number, paymentAmount: number): void {
-    if (paymentAmount > debtAmount) {
+  private validateBillingAndPaymentAmounts(billingAmount: number, paymentAmount: number): void {
+    if (paymentAmount > billingAmount) {
       throw new HttpException(
         'Payment amount is greater than debt amount.',
         HttpStatus.UNPROCESSABLE_ENTITY, 
@@ -179,17 +177,17 @@ export class BillingService {
     }
   }
 
-  private calculatePaymentRemainingAmount(debtAmount: number, payments: payment[]): number {
+  private calculatePaymentRemainingAmount(billingAmount: number, payments: payment[]): number {
     let totalPaidAmount: number = 0;
 
     payments.forEach((payment: payment) => {
       totalPaidAmount += payment.paid_amount.toNumber();
     });
 
-    return debtAmount - totalPaidAmount;
+    return billingAmount - totalPaidAmount;
   }
 
-  private async createPayment(billingId: number, paymentEntity: PaymentEntity): Promise<payment> {
+  private async createPayment(billingId: string, paymentEntity: PaymentEntity): Promise<payment> {
     return await this.repository.executePayment(
       paymentEntity.paidAmount,
       new Date(paymentEntity.paidAt),
@@ -213,7 +211,7 @@ export class BillingService {
         continue;
       }
 
-      const billing: billing | null = await this.repository.findBillingByDebtId(fileRow['debtId']);
+      const billing: billing | null = await this.repository.findBillingById(fileRow['debtId']);
 
       if (billing) {
         console.log('Billing with debtId ' + fileRow['debtId'] + ' already on database. Skipping row ' + i);
@@ -231,7 +229,7 @@ export class BillingService {
       name: fileRow['name'],
       government_id: fileRow['governmentId'],
       email: fileRow['email'],
-      debt_id: fileRow['debtId'],
+      id: fileRow['debtId'],
       amount: Number(fileRow['debtAmount']),
       due_date: new Date(fileRow['debtDueDate'] + ' 23:59:59'),
       status: BillingService.PENDING_PAYMENT,
