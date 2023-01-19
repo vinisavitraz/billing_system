@@ -7,9 +7,6 @@ export class BillingEntity {
   readonly amount: number;
   readonly dueDate: Date;
   readonly status: string;
-  readonly paidAt: Date | null;
-  readonly paidAmount: number | null;
-  readonly paidBy: string | null;
   
   constructor(
     name: string,
@@ -19,9 +16,6 @@ export class BillingEntity {
     amount: number,
     dueDate: Date,
     status: string,
-    paidAt: Date | null,
-    paidAmount: number | null,
-    paidBy: string | null,
   ) {
     this.name = name;
     this.governmentId = governmentId;
@@ -30,9 +24,6 @@ export class BillingEntity {
     this.amount = amount;
     this.dueDate = dueDate;
     this.status = status;
-    this.paidAt = paidAt;
-    this.paidAmount = paidAmount;
-    this.paidBy = paidBy;
   }
 
 }

@@ -8,7 +8,13 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 @Module({
-  imports: [BillingModule, JobModule, MailModule, DatabaseModule, ScheduleModule.forRoot()],
+  imports: [
+    BillingModule, 
+    JobModule, 
+    MailModule, 
+    DatabaseModule, 
+    ScheduleModule.forRoot()
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

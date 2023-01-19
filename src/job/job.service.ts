@@ -8,7 +8,6 @@ import { JobRepository } from './job.repository';
 export class JobService {
 
   public static READ_CSV_QUEUE: string = 'read_csv';
-  public static TRY_PAYMENT_QUEUE: string = 'try_payment';
 
   private readonly repository: JobRepository;
 
@@ -26,6 +25,10 @@ export class JobService {
     const jobs: job[] = await this.repository.getPendingJobsFromQueue(queue);
 
     return jobs.map((job: job) => {return new JobEntity(job.id, job.queue, job.reference, job.status, job.input)});
+  }
+
+  public async updateJobStatus(jobId: number, newStatus: string): Promise<job> {
+    return await this.repository.updateJobStatus(jobId, newStatus);
   }
 
 }

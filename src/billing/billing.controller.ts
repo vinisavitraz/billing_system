@@ -1,7 +1,9 @@
-import { Body, Controller, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
-import LocalFilesInterceptor from 'src/app/api/local-files.interceptor';
+import { Body, Controller, HttpException, HttpStatus, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import LocalFilesInterceptor from 'src/app/api/interceptor/local-files.interceptor';
 import { BillingService } from './billing.service';
-import { PaymentAttemptEntity } from './entity/payment-attempt';
+import { PaymentEntity } from './entity/payment.entity';
+import { ExecutePaymentRequest } from './request/execute-payment.request';
+import { ExecutePaymentResponse } from './response/execute-payment.response';
 import { SaveBillingsFileResponse } from './response/save-billings-file.response';
 
 @Controller('billing')
@@ -14,13 +16,54 @@ export class BillingController {
     path: '/csv'
   }))
   public async saveBillingsFile(@UploadedFile() fileCSV: Express.Multer.File): Promise<SaveBillingsFileResponse> {
-    return await this.billingService.saveBillingsFile(fileCSV.filename);
+    return await this.billingService.scheduleReadCSVJob(fileCSV.filename);
   }
 
   @Post('pay')
-  public async savePaymentAttempt(@Body() paymentAttemptEntity: PaymentAttemptEntity): Promise<SaveBillingsFileResponse> {
-    return await this.billingService.savePaymentAttempt(paymentAttemptEntity);
+  public async executePayment(@Body() executePaymentRequest: ExecutePaymentRequest): Promise<ExecutePaymentResponse> {
+    this.validateRequestBody(executePaymentRequest);
+
+    const payment: PaymentEntity = new PaymentEntity(
+      executePaymentRequest.debtId,
+      new Date(executePaymentRequest.paidAt),
+      executePaymentRequest.paidAmount,
+      executePaymentRequest.paidBy,
+    );
+
+    return await this.billingService.executePayment(payment);
   }
 
+  private validateRequestBody(executePaymentRequest: ExecutePaymentRequest): void {
+    if (!executePaymentRequest.debtId || typeof executePaymentRequest.debtId !== 'string') {
+      throw new HttpException(
+        'Invalid parameter `debtId`',
+        HttpStatus.BAD_REQUEST, 
+      );
+    }
+    if (!executePaymentRequest.paidAt || typeof executePaymentRequest.paidAt !== 'string') {
+      throw new HttpException(
+        'Invalid parameter `paidAt`',
+        HttpStatus.BAD_REQUEST, 
+      );
+    }
+    if (isNaN(Date.parse(executePaymentRequest.paidAt)) == true) {
+      throw new HttpException(
+        'Invalid parameter `paidAt`',
+        HttpStatus.BAD_REQUEST, 
+      );
+    }
+    if (!executePaymentRequest.paidAmount || typeof executePaymentRequest.paidAmount !== 'number') {
+      throw new HttpException(
+        'Invalid parameter `paidAmount`',
+        HttpStatus.BAD_REQUEST, 
+      );
+    }
+    if (!executePaymentRequest.paidBy || typeof executePaymentRequest.paidBy !== 'string') {
+      throw new HttpException(
+        'Invalid parameter `paidBy`',
+        HttpStatus.BAD_REQUEST, 
+      );
+    }
+  }
 
 }

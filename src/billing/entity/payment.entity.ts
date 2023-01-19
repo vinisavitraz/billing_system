@@ -1,13 +1,13 @@
-export class PaymentAttemptEntity {
+export class PaymentEntity {
 
   readonly debtId: string;
-  readonly paidAt: string;
+  readonly paidAt: Date;
   readonly paidAmount: number;
   readonly paidBy: string;
   
   constructor(
     debtId: string,
-    paidAt: string,
+    paidAt: Date,
     paidAmount: number,
     paidBy: string,
   ) {
