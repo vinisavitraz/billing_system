@@ -1,15 +1,15 @@
 export class ExecutePaymentRequest {
 
-  debtId: string | undefined;
-  paidAt: string | undefined;
-  paidAmount: number | undefined;
-  paidBy: string | undefined;
+  debtId: string | any;
+  paidAt: string | any;
+  paidAmount: number | any;
+  paidBy: string | any;
   
   constructor(
-    debtId: string | undefined,
-    paidAt: string | undefined,
-    paidAmount: number | undefined,
-    paidBy: string | undefined,
+    debtId: string | any,
+    paidAt: string | any,
+    paidAmount: number | any,
+    paidBy: string | any,
   ) {
     this.debtId = debtId;
     this.paidAt = paidAt;
