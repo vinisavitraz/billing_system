@@ -1,14 +1,5 @@
 <h1>Sistema de cobrança</h1>
 
-<p align="center">
-<a href="#tecnologies-rocket">Tecnologias</a>&nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;
-<a href="#about-memo">About</a>&nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;
-<a href="#how-to-contribute-">How to Contribute</a>&nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;
-<a href="#utils-">Utils</a>&nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;
-</p>
-
----
-
 ## Tecnologias :rocket:
 
 - NestJS (Typescript)
@@ -19,19 +10,25 @@
 
 ### Docker
 
+Para rodar a aplicacao, é necessário ter o docker instalado.
+
+### Comandos utéis: 
+
+#### Iniciar a aplicacao
+
 $ docker-compose up -d --build                                
 
-Assim que o container estiver rodando, rodar o comando para criar a base de dados:
+####  Assim que o container estiver rodando, rodar o comando para criar a base de dados:
 
 $ docker exec billing_system-api-1 npx prisma migrate reset --force
 
 Após isso, a aplicação já está disponível para receber requests
 
-Finalizar a aplicação:
+#### Finalizar a aplicação:
 
 $ docker-compose down --remove-orphans      
 
-### Acesso ao banco de dados
+#### Acesso ao banco de dados
 
 Depois do container estiver rodando, o acesso a base de dados fica disponível via MySQL usando as seguintes credenciais: 
 
@@ -43,11 +40,18 @@ Senha: admin
 
 ## Endpoints disponíveis:
 
-### Criar boletos com arquivo CSV
+#### Criar boletos com arquivo CSV
+
+Exemplo de arquivo: 
+
+``` mock_data.csv
+name,governmentId,email,debtAmount,debtDueDate,debtId
+John [Doe,11111111111,johndoe@kanastra.com.br,1000000.00,2022-10-12,8291](mailto:Doe,11111111111,johndoe@kanastra.com.br,1000000.00,2022-10-12,8291) 
+```
 
 Endpoint: POST `/billing`
 
-Request example: 
+Exemplo de request: 
 
 curl --location --request POST 'localhost:3000/billing' \
 --form 'billings=@"/Users/viniciussavitraz/Downloads/mock_data.csv"'
@@ -56,11 +60,14 @@ Response:
 
 {"status":"Added to queue"}
 
-### Realizar pagamento
+#### Realizar pagamento do boleto
 
-O valor pode ser pago inteiro ou parcialmente. No caso de parcil, o boleto continua pendente até o vencimento
+Após o cadastro de novos boletos, o pagamento fica disponível por esse endpoint
+O valor pode ser pago inteiro ou parcialmente. No caso de parcial, o boleto continua pendente e pode receber novos pagamentos até o vencimento
 
 Endpoint: POST `/billing/pay`
+
+Exemplo de request: 
 
 curl --location --request POST 'localhost:3000/billing/pay' \
 --header 'Content-Type: application/json' \
@@ -78,8 +85,6 @@ Response:
 ou
 
 {"debtStatus":"pending_payment"}
-
-
 
 ## Testes
 
