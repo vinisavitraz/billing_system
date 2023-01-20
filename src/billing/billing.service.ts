@@ -24,7 +24,7 @@ export class BillingService {
   public static BATCH_SIZE: number = 250;
   public static REMAINING_DAYS_TO_REMINDER_PAYMENT: number = 1;
 
-  private readonly repository: BillingRepository;
+  readonly repository: BillingRepository;
 
   constructor(
     private readonly jobService: JobService, 

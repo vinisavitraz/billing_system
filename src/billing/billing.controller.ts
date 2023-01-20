@@ -16,11 +16,14 @@ export class BillingController {
     path: '/csv'
   }))
   public async saveBillingsFile(@UploadedFile() fileCSV: Express.Multer.File): Promise<SaveBillingsFileResponse> {
+    console.log('saveBillingsFile');
+    console.log(fileCSV.filename);
     return await this.billingService.scheduleReadCSVJob(fileCSV.filename);
   }
 
   @Post('pay')
   public async executePayment(@Body() executePaymentRequest: ExecutePaymentRequest): Promise<ExecutePaymentResponse> {
+    console.log('executePayment');
     this.validateRequestBody(executePaymentRequest);
 
     const payment: PaymentEntity = new PaymentEntity(

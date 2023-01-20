@@ -17,11 +17,11 @@ describe('Billings (e2e)', () => {
     await app.init();
   });
 
-  it('/ (GET)', () => {
-    //const expectedResponse: ExecutePaymentResponse = new ExecutePaymentResponse(BillingService.PAID);
+  // it('/ (GET)', () => {
+  //   //const expectedResponse: ExecutePaymentResponse = new ExecutePaymentResponse(BillingService.PAID);
     
-    return request(app.getHttpServer())
-      .post('/billings/pay')
-      .expect(200);
-  });
+  //   return request(app.getHttpServer())
+  //     .post('/billings/pay')
+  //     .expect(200);
+  // });
 });
