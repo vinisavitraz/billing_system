@@ -73,7 +73,7 @@ export class BillingService {
 
   public async scheduleReadCSVJob(fileName: string): Promise<SaveBillingsFileResponse> {
     await this.jobService.createJob(JobService.READ_CSV_QUEUE, fileName);
-
+    
     return new SaveBillingsFileResponse('Added to queue');
   }
 
