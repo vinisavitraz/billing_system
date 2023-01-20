@@ -1,27 +1,35 @@
 services:
   api:
+    container_name: billing_system
     build:
       dockerfile: Dockerfile
       context: .
     volumes:
       - .:/usr/app
     env_file:
-    - .env
+      - .env
     # Run a command against the development stage of the image
-    command: npm run start
+    command: npm run start:dev
     ports:
       - 3000:3000
+    networks:
+      - api
+    depends_on:
+      - db
+
   db:
-    image: mysql:5.7
+    container_name: database
+    image: postgres:13
     restart: always
-    environment:
-      MYSQL_DATABASE: 'billing_system'
-      MYSQL_ROOT_PASSWORD: 'admin'
+    env_file:
+      - .env
     ports:
-      - '3306:3306'
-    expose:
-      - '3306'
+      - '5432:5432'
+    networks:
+      - api
     volumes:
-      - my-db:/var/lib/mysql
+      - pgdata:/var/lib/postgresql/data
+networks:
+ api:
 volumes:
-  my-db:
+ pgdata:

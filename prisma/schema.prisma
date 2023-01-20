@@ -4,7 +4,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgres"
   url      = env("DATABASE_URL")
 }
 
@@ -14,7 +14,7 @@ model billing {
   email            String        @db.VarChar(100)
   name             String        @db.VarChar(200)
   amount           Decimal
-  due_date         DateTime      @db.DateTime(0)
+  due_date         DateTime      @db.Timestamp(0)
   status           String        @db.VarChar(20)
   payments         payment[]
 
@@ -23,7 +23,7 @@ model billing {
 
 model payment {
   id               Int           @id @default(autoincrement())
-  paid_at          DateTime      @db.DateTime(0)
+  paid_at          DateTime      @db.Timestamp(0)
   paid_amount      Decimal
   paid_by          String        @db.VarChar(200)
   billing_id       String
