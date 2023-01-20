@@ -53,7 +53,7 @@ describe('BillingRepository', () => {
   });
 
   it('should return expired billings', () => {
-    databaseService.billing.findFirst = jest.fn().mockReturnValueOnce(
+    databaseService.billing.findMany = jest.fn().mockReturnValueOnce(
       [
         {
           id: '1',
@@ -88,7 +88,7 @@ describe('BillingRepository', () => {
     const remindAfterDate: Date = new Date();
     remindAfterDate.setDate(remindAfterDate.getDate() - BillingService.REMAINING_DAYS_TO_REMINDER_PAYMENT);
 
-    databaseService.billing.findFirst = jest.fn().mockReturnValueOnce(
+    databaseService.billing.findMany = jest.fn().mockReturnValueOnce(
       [
         {
           id: '1',

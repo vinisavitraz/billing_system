@@ -1,8 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { job } from '@prisma/client';
 import { DatabaseService } from 'src/database/database.service';
 import { JobEntity } from './entity/job.entity';
-import { JobRepository } from './job.repository';
 import { JobService } from './job.service';
 
 describe('JobService', () => {
