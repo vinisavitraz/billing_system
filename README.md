@@ -1,59 +1,97 @@
+<h1>Sistema de cobrança</h1>
+
 <p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
+<a href="#tecnologies-rocket">Tecnologias</a>&nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;
+<a href="#about-memo">About</a>&nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;
+<a href="#how-to-contribute-">How to Contribute</a>&nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;
+<a href="#utils-">Utils</a>&nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+---
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Tecnologias :rocket:
 
-## Description
+- NestJS (Typescript)
+- MySQL
+- PrismaORM
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Rodando o serviço
 
-## Installation
+### Docker
 
-```bash
-$ npm install
-```
+$ docker-compose up -d --build                                
 
-## Running the app
+Assim que o container estiver rodando, rodar o comando para criar a base de dados:
 
-```bash
-# development
-$ npm run start
+$ docker exec billing_system-api-1 npx prisma migrate reset --force
 
-# watch mode
-$ npm run start:dev
+Após isso, a aplicação já está disponível para receber requests
 
-# production mode
-$ npm run start:prod
-```
+Finalizar a aplicação:
 
-## Test
+$ docker-compose down --remove-orphans      
 
-```bash
-# unit tests
+### Acesso ao banco de dados
+
+Depois do container estiver rodando, o acesso a base de dados fica disponível via MySQL usando as seguintes credenciais: 
+
+Host: localhost
+Port: 3306
+Database: billing_system
+User: root
+Senha: admin
+
+## Endpoints disponíveis:
+
+### Criar boletos com arquivo CSV
+
+Endpoint: POST `/billing`
+
+Request example: 
+
+curl --location --request POST 'localhost:3000/billing' \
+--form 'billings=@"/Users/viniciussavitraz/Downloads/mock_data.csv"'
+
+Response:
+
+{"status":"Added to queue"}
+
+### Realizar pagamento
+
+O valor pode ser pago inteiro ou parcialmente. No caso de parcil, o boleto continua pendente até o vencimento
+
+Endpoint: POST `/billing/pay`
+
+curl --location --request POST 'localhost:3000/billing/pay' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+  "debtId": "1242",
+  "paidAt": "2023-01-22 10:00:00",
+  "paidAmount": 738,
+  "paidBy": "John Doe"
+}'
+
+Response:
+
+{"debtStatus":"paid"}
+
+ou
+
+{"debtStatus":"pending_payment"}
+
+
+
+## Testes
+
+
+# Unit tests
+
 $ npm run test
 
-# e2e tests
+# E2E tests
+
 $ npm run test:e2e
 
-# test coverage
+# Test coverage
+
 $ npm run test:cov
-```
