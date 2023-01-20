@@ -1,0 +1,3 @@
+name,governmentId,email,debtAmount,debtDueDate,debtId
+John Doe,11111111111,johndoe@kanastra.com.br,10.00,2023-01-20,8293
+John Doe,11111111111,johndoe@kanastra.com.br,1.00,2023-01-13,8294
