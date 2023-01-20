@@ -95,7 +95,7 @@ $ npm run test
 
 # E2E tests
 
-$ npm run test:e2e
+$ npm run test:e2e --runInBand
 
 # Test coverage
 

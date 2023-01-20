@@ -25,7 +25,6 @@ describe('Billings (e2e)', () => {
       100000.00,
       'John Doe',
     );
-    //const expectedResponse: ExecutePaymentResponse = new ExecutePaymentResponse(BillingService.PAID);
     
     return request(app.getHttpServer())
       .post('/billing/pay')
@@ -61,7 +60,6 @@ describe('Billings (e2e)', () => {
       100000.00,
       'John Doe',
     );
-    //const expectedResponse: ExecutePaymentResponse = new ExecutePaymentResponse(BillingService.PAID);
     
     return request(app.getHttpServer())
       .post('/billing/pay')
@@ -77,7 +75,6 @@ describe('Billings (e2e)', () => {
       .attach('billings', './test/mocks/data/test.csv')
       .expect(201)
       .expect('{"status":"Added to queue"}');
-    console.log('iam here!');
 
     const scheduledJob: job | null = await prisma.job.findFirst({
       where: {
