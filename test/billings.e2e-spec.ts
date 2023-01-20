@@ -1,9 +1,8 @@
-import * as request from 'supertest';
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { ExecutePaymentResponse } from 'src/billing/response/execute-payment.response';
-import { BillingService } from 'src/billing/billing.service';
 import { BillingModule } from 'src/billing/billing.module';
+import * as request from 'supertest';
+import { ExecutePaymentRequest } from 'src/billing/request/execute-payment.request';
 
 describe('Billings (e2e)', () => {
   let app: INestApplication;
@@ -17,11 +16,19 @@ describe('Billings (e2e)', () => {
     await app.init();
   });
 
-  // it('/ (GET)', () => {
-  //   //const expectedResponse: ExecutePaymentResponse = new ExecutePaymentResponse(BillingService.PAID);
+  it('test payment flow', () => {
+    const mockedRequestBody: ExecutePaymentRequest = new ExecutePaymentRequest(
+      '8291',
+      '2022-06-09 10:00:00',
+      100000.00,
+      'John Doe',
+    );
+    //const expectedResponse: ExecutePaymentResponse = new ExecutePaymentResponse(BillingService.PAID);
     
-  //   return request(app.getHttpServer())
-  //     .post('/billings/pay')
-  //     .expect(200);
-  // });
+    return request(app.getHttpServer())
+      .post('/billing/pay')
+      .send(mockedRequestBody)
+      .expect(404)
+      .expect('{"statusCode":404,"message":"Billing with ID `8291` not found."}');
+  });
 });
