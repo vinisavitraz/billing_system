@@ -70,8 +70,13 @@
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
+    "rootDir": "./",
     "modulePaths": [
       "<rootDir>"
+    ],
+    "moduleDirectories": [
+      "<rootDir>/../",
+      "node_modules"
     ],
     "transformIgnorePatterns": [
       "node_modules",
