@@ -1,0 +1,27 @@
+services:
+  api:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    volumes:
+      - .:/usr/app
+    env_file:
+    - .env
+    # Run a command against the development stage of the image
+    command: npm run start
+    ports:
+      - 3000:3000
+  db:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_DATABASE: 'billing_system'
+      MYSQL_ROOT_PASSWORD: 'admin'
+    ports:
+      - '3306:3306'
+    expose:
+      - '3306'
+    volumes:
+      - my-db:/var/lib/mysql
+volumes:
+  my-db:
