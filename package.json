@@ -75,12 +75,10 @@
     },
     "rootDir": "./",
     "modulePaths": [
-      "<rootDir>"
+      "<rootDir>",
+      "<rootDir>/test"
     ],
-    "moduleDirectories": [
-      "<rootDir>/../",
-      "node_modules"
-    ],
+    
     "transformIgnorePatterns": [
       "node_modules",
       "dist"
@@ -100,9 +98,7 @@
       "interceptor",
       "app.e2e-spec.ts"
     ],
-    "setupFilesAfterEnv": [
-      "./test/mocks/mocks.ts"
-    ],
+   
     "testEnvironment": "node"
   }
 }
