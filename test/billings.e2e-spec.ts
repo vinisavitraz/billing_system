@@ -18,6 +18,26 @@ describe('Billings (e2e)', () => {
     await app.init();
   });
 
+  it('should save csv file and schedule new job to queue `read_csv`', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/billing')
+      .set('Content-Type', 'multipart/form-data')
+      .attach('billings', './test/mocks/data/test.csv')
+      .expect(201)
+      .expect('{"status":"Added to queue"}');
+
+    const scheduledJob: job | null = await prisma.job.findFirst({
+      where: {
+        queue: 'read_csv',
+      },
+    });
+
+
+    expect(scheduledJob).not.toBeNull();
+    expect(scheduledJob!.queue).toEqual('read_csv');
+    expect(scheduledJob!.status).toEqual('pending');
+  });
+  
   it('test payment flow with error', () => {
     const mockedRequestBody: ExecutePaymentRequest = new ExecutePaymentRequest(
       '8291',
@@ -68,24 +88,6 @@ describe('Billings (e2e)', () => {
       .expect('{"statusCode":422,"message":"Payment amount is greater than debt amount."}');
   });
 
-  it('should save csv file and schedule new job to queue `read_csv`', async () => {
-    const res = await request(app.getHttpServer())
-      .post('/billing')
-      .set('Content-Type', 'multipart/form-data')
-      .attach('billings', './test/mocks/data/test.csv')
-      .expect(201)
-      .expect('{"status":"Added to queue"}');
-
-    const scheduledJob: job | null = await prisma.job.findFirst({
-      where: {
-        queue: 'read_csv',
-      },
-    });
-
-
-    expect(scheduledJob).not.toBeNull();
-    expect(scheduledJob!.queue).toEqual('read_csv');
-    expect(scheduledJob!.status).toEqual('pending');
-  });
+  
 
 });

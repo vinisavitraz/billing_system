@@ -30,28 +30,33 @@ describe('BillingController', () => {
     expect(controller).toBeDefined();
   });
 
-  it('should call service with the expected file name', () => {
-    const serviceSpy = jest.spyOn(service, 'scheduleReadCSVJob').mockImplementation(async () => {
-      return new SaveBillingsFileResponse('Added to queue');
+  describe('POST /billing ', () => {
+    it('should call service with the expected file name', () => {
+      const serviceSpy = jest.spyOn(service, 'scheduleReadCSVJob').mockImplementation(async () => {
+        return new SaveBillingsFileResponse('Added to queue');
+      });
+      const mockedFile: Express.Multer.File = {
+        fieldname: 'billings',
+        originalname: 'billings.csv',
+        mimetype: 'text/csv',
+        path: 'something',
+        buffer: Buffer.from('one,two,three'),
+      } as Express.Multer.File;
+  
+      controller.saveBillingsFile(mockedFile);
+  
+      expect(serviceSpy).toHaveBeenCalledWith(mockedFile.filename);
     });
-    const mockedFile: Express.Multer.File = {
-      fieldname: 'billings',
-      originalname: 'billings.csv',
-      mimetype: 'text/csv',
-      path: 'something',
-      buffer: Buffer.from('one,two,three'),
-    } as Express.Multer.File;
-
-    controller.saveBillingsFile(mockedFile);
-
-    expect(serviceSpy).toHaveBeenCalledWith(mockedFile.filename);
   });
+
+
+  describe('POST /billing ', () => {});
 
   it('should call service with the expected payment entity', () => {
     const serviceSpy = jest.spyOn(service, 'executePayment').mockImplementation(async () => {
       return new ExecutePaymentResponse(BillingService.PAID);
     });
-    const mockedRequestBody: ExecutePaymentRequest = new ExecutePaymentRequest(
+    const requestBody: ExecutePaymentRequest = new ExecutePaymentRequest(
       '8291',
       '2022-06-09 10:00:00',
       100000.00,
@@ -64,7 +69,7 @@ describe('BillingController', () => {
       'John Doe',
     );
 
-    controller.executePayment(mockedRequestBody);
+    controller.executePayment(requestBody);
 
     expect(serviceSpy).toHaveBeenCalledWith(expectedPaymentEntity);
   });
@@ -88,7 +93,7 @@ describe('BillingController', () => {
       'John Doe',
     );
 
-    expect(() => { controller['validateRequestBody'](executePaymentRequest); }).toThrow('Invalid parameter `debtId`');
+    expect(() => { controller['validateRequestBody'](executePaymentRequest); }).toThrow('Invalid request field `debtId`');
   });
 
   it('should validate request body parameter `paidAt` and throw exception', () => {
@@ -99,7 +104,7 @@ describe('BillingController', () => {
       'John Doe',
     );
 
-    expect(() => { controller['validateRequestBody'](executePaymentRequest); }).toThrow('Invalid parameter `paidAt`');
+    expect(() => { controller['validateRequestBody'](executePaymentRequest); }).toThrow('Invalid request field date `paidAt`');
   });
 
   it('should validate request body parameter `paidAt` with number and throw exception', () => {
@@ -110,7 +115,7 @@ describe('BillingController', () => {
       'John Doe',
     );
 
-    expect(() => { controller['validateRequestBody'](executePaymentRequest); }).toThrow('Invalid parameter `paidAt`');
+    expect(() => { controller['validateRequestBody'](executePaymentRequest); }).toThrow('Invalid request field date `paidAt`');
   });
 
   it('should validate request body parameter `paidAmount` and throw exception', () => {
@@ -121,7 +126,7 @@ describe('BillingController', () => {
       'John Doe',
     );
 
-    expect(() => { controller['validateRequestBody'](executePaymentRequest); }).toThrow('Invalid parameter `paidAmount`');
+    expect(() => { controller['validateRequestBody'](executePaymentRequest); }).toThrow('Invalid request field `paidAmount`');
   });
 
   it('should validate request body parameter `paidBy` and throw exception', () => {
@@ -132,7 +137,7 @@ describe('BillingController', () => {
       12,
     );
 
-    expect(() => { controller['validateRequestBody'](executePaymentRequest); }).toThrow('Invalid parameter `paidBy`');
+    expect(() => { controller['validateRequestBody'](executePaymentRequest); }).toThrow('Invalid request field `paidBy`');
   });
 
 });
