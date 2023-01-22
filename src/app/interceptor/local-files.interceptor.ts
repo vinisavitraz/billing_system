@@ -19,7 +19,7 @@ function LocalFilesInterceptor (options: LocalFilesInterceptorOptions): Type<Nes
     
     constructor() {
       const destination: string = `${CSV_BASE_FOLDER}${options.path}`;
-      const multerOptions: MulterOptions = {
+      const multerOptions: MulterOptions = {  
         storage: diskStorage({
           destination,
         })
