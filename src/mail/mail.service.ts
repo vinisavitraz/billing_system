@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ArgumentValidator } from 'src/app/validator/argument.validator';
+import { InvalidArgumentValidator } from 'src/app/validator/invalid-argument.validator';
 import { MailEntity } from './entity/mail.entity';
 
 @Injectable()
@@ -12,10 +12,10 @@ export class MailService {
     billingAmount: number,
     billingDueDate: Date,
   ): void {
-    ArgumentValidator.validate(mailTo, 'mailTo', 'string');
-    ArgumentValidator.validate(billingId, 'billingId', 'string');
-    ArgumentValidator.validate(billingTo, 'billingTo', 'string');
-    ArgumentValidator.validate(billingAmount, 'billingAmount', 'number');
+    InvalidArgumentValidator.validate(mailTo, 'mailTo', 'string');
+    InvalidArgumentValidator.validate(billingId, 'billingId', 'string');
+    InvalidArgumentValidator.validate(billingTo, 'billingTo', 'string');
+    InvalidArgumentValidator.validate(billingAmount, 'billingAmount', 'number');
 
     const dueDateMessage: string = this.builDueDateMessage(billingDueDate);
     const mailEntity: MailEntity = new MailEntity(
@@ -34,10 +34,10 @@ export class MailService {
     billingAmount: number,
     billingDueDate: Date,
   ): void {
-    ArgumentValidator.validate(mailTo, 'mailTo', 'string');
-    ArgumentValidator.validate(billingId, 'billingId', 'string');
-    ArgumentValidator.validate(billingTo, 'billingTo', 'string');
-    ArgumentValidator.validate(billingAmount, 'billingAmount', 'number');
+    InvalidArgumentValidator.validate(mailTo, 'mailTo', 'string');
+    InvalidArgumentValidator.validate(billingId, 'billingId', 'string');
+    InvalidArgumentValidator.validate(billingTo, 'billingTo', 'string');
+    InvalidArgumentValidator.validate(billingAmount, 'billingAmount', 'number');
     
     const dueDateMessage: string = this.builDueDateMessage(billingDueDate);
     const mailEntity: MailEntity = new MailEntity(

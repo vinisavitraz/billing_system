@@ -5,64 +5,65 @@ describe('RequestFieldValidator', () => {
   
   const mockValidData = [
     {
-      requestField: '8291',
-      fieldType: 'string',
-      fieldName: 'debtId',
+      field: '8291',
+      name: 'debtId',
+      type: 'string',
     },
     {
-      requestField: '2022-06-09 10:00:00',
-      fieldType: 'date',
-      fieldName: 'paidAt',
+      field: '2022-06-09 10:00:00',
+      name: 'paidAt',
+      type: 'date',
+      
     },
     {
-      requestField: 100000.00,
-      fieldType: 'number',
-      fieldName: 'paidAmount',
+      field: 100000.00,
+      name: 'paidAmount',
+      type: 'number',
     },
   ];
 
   describe.each(mockValidData)(`Test field validator with valid data`, (mockRequest) => {
-    it('should not throw exception for field `' + mockRequest.fieldName + '`', () => {
-      expect(() => { RequestFieldValidator.validateField(mockRequest.requestField, mockRequest.fieldName, mockRequest.fieldType) }).not.toThrow(HttpException);
+    it('should not throw exception for field `' + mockRequest.name + '`', () => {
+      expect(() => { RequestFieldValidator.validateField(mockRequest.field, mockRequest.name, mockRequest.type) }).not.toThrow(HttpException);
     });
   });
 
   const mockInvalidData = [
     {
-      requestField: null,
-      fieldType: 'string',
-      fieldName: 'debtId',
+      field: null,
+      name: 'debtId',
+      type: 'string',
     },
     {
-      requestField: 123,
-      fieldType: 'string',
-      fieldName: 'debtId',
+      field: 123,
+      name: 'debtId',
+      type: 'string',
     },
     {
-      requestField: null,
-      fieldType: 'date',
-      fieldName: 'paidAt',
+      field: null,
+      name: 'paidAt',
+      type: 'date',
     },
     {
-      requestField: 'abc',
-      fieldType: 'date',
-      fieldName: 'paidAt',
+      field: 'abc',
+      name: 'paidAt',
+      type: 'date',
     },
     {
-      requestField: null,
-      fieldType: 'number',
-      fieldName: 'paidAmount',
+      field: null,
+      name: 'paidAmount',
+      type: 'number',
     },
     {
-      requestField: 'abc',
-      fieldType: 'number',
-      fieldName: 'paidAmount',
+      field: 'abc',
+      name: 'paidAmount',
+      type: 'number',
     },
   ];
 
   describe.each(mockInvalidData)(`Test field validator with invalid data`, (mockRequest) => {
-    it('should throw exception for field `' + mockRequest.fieldName + '`', () => {
-      expect(() => { RequestFieldValidator.validateField(mockRequest.requestField, mockRequest.fieldName, mockRequest.fieldType) }).toThrow(HttpException);
+    it('should throw exception for field `' + mockRequest.name + '`', () => {
+      expect(() => { RequestFieldValidator.validateField(mockRequest.field, mockRequest.name, mockRequest.type) }).toThrow(HttpException);
     });
   });
 
