@@ -33,18 +33,18 @@ export class BillingService {
   }
 
   @Cron(CronExpression.EVERY_5_SECONDS)
-  private async executeReadCSVPendingJobs(): Promise<void> {
+  public async executeReadCSVPendingJobs(): Promise<void> {
     const pendingJobs: JobEntity[] = await this.jobService.getPendingJobsFromQueue(Queue.READ_CSV);
     
     for (let i = 0; i < pendingJobs.length; i++) {
       const pendingJob: JobEntity = pendingJobs[i];
-      await this.createBillingsFromCSVFile(pendingJob.reference);
+      await this.createBillingsFromCSVFile(pendingJob.reference, BillingService.BATCH_SIZE);
       await this.jobService.updateJobStatus(pendingJob.id, JobStatus.EXECUTED);
     }
   }
   
   @Cron(CronExpression.EVERY_DAY_AT_1AM)
-  private async checkBillingsDueDateAndUpdateStatus(): Promise<void> {
+  public async checkBillingsDueDateAndUpdateStatus(): Promise<void> {
     const remindAfterDate: Date = new Date();
     remindAfterDate.setDate(remindAfterDate.getDate() - BillingService.REMAINING_DAYS_TO_REMINDER_PAYMENT);
 
@@ -78,12 +78,16 @@ export class BillingService {
   }
 
   public async executePayment(paymentEntity: PaymentEntity): Promise<ExecutePaymentResponse> {
-    const billing: billing | null = await this.findPendingPaymentBillingByIdOrCry(paymentEntity);
+    const billing: billing | null = await this.findBillingByIdOrCry(paymentEntity.debtId);
+
+    this.validateBillingState(billing, paymentEntity);
+    this.validateBillingAndPaymentAmounts(billing.amount.toNumber(), paymentEntity.paidAmount);
+
     const payments: payment[] = await this.repository.findBillingPayments(billing.id);
     let paymentRemainingAmount: number = billing.amount.toNumber();
 
     if (payments.length > 0) {
-      paymentRemainingAmount = this.calculatePaymentRemainingAmount(paymentRemainingAmount, payments);
+      paymentRemainingAmount = this.calculateRemainingPaymentAmount(paymentRemainingAmount, payments);
     }
 
     this.validateBillingAndPaymentAmounts(paymentRemainingAmount, paymentEntity.paidAmount);
@@ -100,11 +104,9 @@ export class BillingService {
     return new ExecutePaymentResponse(BillingStatus.PENDING_PAYMENT);
   }
 
-  private async createBillingsFromCSVFile(fileName: string): Promise<void> {
+  private async createBillingsFromCSVFile(fileName: string, maxBatchSize: number): Promise<void> {
     const filePath: string = BillingService.CSV_FILES_BASE_PATH + fileName;
-    const fileRowsJson: any[] = await csvToJson().fromFile(filePath);
-    
-    await fs.promises.unlink(filePath);
+    const fileRowsJson: any[] = await this.readAndDeleteFile(filePath);
     
     if (fileRowsJson.length === 0) {
       console.log('Invalid file content.');
@@ -113,17 +115,15 @@ export class BillingService {
 
     const billingsInput: object[] = await this.mapFileContentToBillings(fileRowsJson);
 
-    if (billingsInput.length > BillingService.BATCH_SIZE) {
+    if (billingsInput.length > maxBatchSize) {
       console.log('Processing file in batches.');
-      for (let i = 0; i < billingsInput.length; i += BillingService.BATCH_SIZE) {
-        const batch: object[] = billingsInput.slice(i, i + BillingService.BATCH_SIZE);
-        await this.createNewBillings(batch);
+      for (let i = 0; i < billingsInput.length; i += maxBatchSize) {
+        const batch: object[] = billingsInput.slice(i, i + maxBatchSize);
+        await this.repository.createNewBillings(batch);
       }
-      console.log('File processed with success.');
-      return;
+    } else {
+      await this.repository.createNewBillings(billingsInput);
     }
-    
-    await this.createNewBillings(billingsInput);
     
     billingsInput.forEach((billingInput: any) => {
       this.mailService.sendInvoiceCreatedMail(
@@ -138,18 +138,22 @@ export class BillingService {
     console.log('File processed with success.');
   }
 
-  private async findPendingPaymentBillingByIdOrCry(paymentEntity: PaymentEntity): Promise<billing> {
-    const billing: billing | null = await this.repository.findBillingById(paymentEntity.debtId);
+  private async readAndDeleteFile(filePath: string): Promise<any[]> {
+    const fileRowsJson: any[] = await csvToJson().fromFile(filePath);
+    await fs.promises.unlink(filePath);
+
+    return fileRowsJson;
+  }
+
+  private async findBillingByIdOrCry(debtId: string): Promise<billing> {
+    const billing: billing | null = await this.repository.findBillingById(debtId);
 
     if (!billing) {
       throw new HttpException(
-        'Billing with ID `' + paymentEntity.debtId + '` not found.',
+        'Billing with ID `' + debtId + '` not found.',
         HttpStatus.NOT_FOUND, 
       );
     }
-
-    this.validateBillingState(billing, paymentEntity);
-    this.validateBillingAndPaymentAmounts(billing.amount.toNumber(), paymentEntity.paidAmount);
 
     return billing;
   }
@@ -179,7 +183,7 @@ export class BillingService {
     }
   }
 
-  private calculatePaymentRemainingAmount(billingAmount: number, payments: payment[]): number {
+  private calculateRemainingPaymentAmount(billingAmount: number, payments: payment[]): number {
     let totalPaidAmount: number = 0;
 
     payments.forEach((payment: payment) => {
@@ -198,21 +202,18 @@ export class BillingService {
     );
   }
 
-  private async createNewBillings(billingsInput: object[]): Promise<void> {
-    await this.repository.createNewBillings(billingsInput);
-  }
-
   private async mapFileContentToBillings(fileRowsJson: any[]): Promise<object[]> {
     const billingsInput: object[] = [];
 
     for (let i = 0; i < fileRowsJson.length; i++) {
       const fileRow: any = fileRowsJson[i];
       
-      if (!this.validateFileRow(fileRow)) {
-        console.log('Invalid row content. Skipping row ' + i);
+      try {
+        this.validateFileRow(fileRow);
+      } catch (error) {
+        console.log('Invalid content. Skipping row ' + i);
         continue;
       }
-
       const billing: billing | null = await this.repository.findBillingById(fileRow['debtId']);
 
       if (billing) {
@@ -220,48 +221,29 @@ export class BillingService {
         continue;
       }
 
-      billingsInput.push(this.buildBillingInput(fileRow));
+      billingsInput.push(
+        {
+          name: fileRow['name'],
+          government_id: fileRow['governmentId'],
+          email: fileRow['email'],
+          id: fileRow['debtId'],
+          amount: Number(fileRow['debtAmount']),
+          due_date: new Date(fileRow['debtDueDate'] + ' 23:59:59'),
+          status: BillingStatus.PENDING_PAYMENT,
+        }
+      );
     }
 
     return billingsInput;
   }
 
-  private buildBillingInput(fileRow: any): object {
-    return {
-      name: fileRow['name'],
-      government_id: fileRow['governmentId'],
-      email: fileRow['email'],
-      id: fileRow['debtId'],
-      amount: Number(fileRow['debtAmount']),
-      due_date: new Date(fileRow['debtDueDate'] + ' 23:59:59'),
-      status: BillingStatus.PENDING_PAYMENT,
-    };
-  }
-
-  private validateFileRow(fileRow: any): boolean {
-    if (!fileRow['name'] || typeof fileRow['name'] !== 'string') {
-      return false;
-    } 
-    if (!fileRow['governmentId'] || typeof fileRow['name'] !== 'string') {
-      return false;
-    } 
-    if (!fileRow['email'] || typeof fileRow['name'] !== 'string') {
-      return false;
-    } 
-    if (!fileRow['debtAmount'] || isNaN(fileRow['debtAmount'])) {
-      return false;
-    }
-    if (!fileRow['debtDueDate']) {
-      return false;
-    }
-    if (isNaN(Date.parse(fileRow['debtDueDate'])) == true) {
-      return false;
-    }
-    if (!fileRow['debtId'] || typeof fileRow['name'] !== 'string') {
-      return false;
-    } 
-
-    return true;
+  private validateFileRow(fileRow: any): void {
+    InvalidArgumentValidator.validate(fileRow['name'], 'name', 'string');
+    InvalidArgumentValidator.validate(fileRow['governmentId'], 'governmentId', 'string');
+    InvalidArgumentValidator.validate(fileRow['email'], 'email', 'string');
+    InvalidArgumentValidator.validate(fileRow['debtAmount'], 'debtAmount', 'number');
+    InvalidArgumentValidator.validateDateString(fileRow['debtDueDate'], 'debtDueDate');
+    InvalidArgumentValidator.validate(fileRow['debtId'], 'debtId', 'string');
   }
 
 }
