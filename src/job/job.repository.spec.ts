@@ -21,63 +21,86 @@ describe('JobRepository', () => {
     expect(repository).toBeDefined();
   });
 
-  it('should create new job', () => {
-    databaseService.job.create = jest.fn().mockReturnValueOnce(
-      {
-        id: 1,
-        queue: 'test_queue',
-        reference: '123',
-        status: 'pending',
-      }
-    );
-    const expectedJobEntity: JobEntity = new JobEntity(
-      1,
-      'test_queue',
-      '123',
-      'pending',
-    );
-    
-    expect(repository.createJob('test_queue', '123')).resolves.toEqual(expectedJobEntity);
-  });
-
-  it('should get pending jobs from queue', () => {
-    databaseService.job.findMany = jest.fn().mockReturnValueOnce(
-      [{
-        id: 1,
-        queue: 'test_queue',
-        reference: '123',
-        status: 'pending',  
-      }]
-    );
-    const expectedJobEntities: JobEntity[] = [
-      new JobEntity(
+  describe('test create job', () => {
+    it('should create new job and return entity', async () => {
+      databaseService.job.create = jest.fn().mockReturnValueOnce(
+        {
+          id: 1,
+          queue: 'test_queue',
+          reference: '123',
+          status: 'pending',
+        }
+      );
+      const expectedJobEntity: JobEntity = new JobEntity(
         1,
         'test_queue',
         '123',
         'pending',
-      ),
-    ];
-    
-    expect(repository.getPendingJobsFromQueue('test_queue')).resolves.toEqual(expectedJobEntities);
+      );
+
+      const createdJob: JobEntity = await repository.createJob('test_queue', '123');
+      
+      expect(createdJob).toEqual(expectedJobEntity);
+    });
   });
 
-  it('should update job status', () => {
-    databaseService.job.update = jest.fn().mockReturnValueOnce(
-      {
-        id: 1,
-        queue: 'test_queue',
-        reference: '123',
-        status: 'executed',  
-      }
-    );
-    const expectedJobEntity: JobEntity = new JobEntity(
-      1,
-      'test_queue',
-      '123',
-      'executed',
-    );
-    
-    expect(repository.updateJobStatus(1, 'executed')).resolves.toEqual(expectedJobEntity);
+  describe('test get pending jobs with scheduled jobs', () => {
+    it('should return pending jobs entities', async () => {
+      databaseService.job.findMany = jest.fn().mockReturnValueOnce(
+        [{
+          id: 1,
+          queue: 'test_queue',
+          reference: '123',
+          status: 'pending',  
+        }]
+      );
+      const expectedJobEntities: JobEntity[] = [
+        new JobEntity(
+          1,
+          'test_queue',
+          '123',
+          'pending',
+        ),
+      ];
+
+      const pendingJobs: JobEntity[] = await repository.getPendingJobsFromQueue('test_queue');
+      
+      expect(pendingJobs).toEqual(expectedJobEntities);
+    });
+  });
+
+  describe('test get pending jobs without scheduled jobs', () => {
+    it('should return empty list', async () => {
+      databaseService.job.findMany = jest.fn().mockReturnValueOnce([]);
+      const expectedJobEntities: JobEntity[] = [];
+      
+      const pendingJobs: JobEntity[] = await repository.getPendingJobsFromQueue('test_queue');
+      
+      expect(pendingJobs).toEqual(expectedJobEntities);
+    });
+  });
+  
+  describe('test update job status', () => {
+    it('should update job status and return entity', async () => {
+      databaseService.job.update = jest.fn().mockReturnValueOnce(
+        {
+          id: 1,
+          queue: 'test_queue',
+          reference: '123',
+          status: 'executed',  
+        }
+      );
+      const expectedJobEntity: JobEntity = new JobEntity(
+        1,
+        'test_queue',
+        '123',
+        'executed',
+      );
+
+      const updatedJob: JobEntity = await repository.updateJobStatus(1, 'executed');
+      
+      expect(updatedJob).toEqual(expectedJobEntity);
+    });
   });
 
 });
