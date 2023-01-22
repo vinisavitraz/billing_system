@@ -1,9 +1,3 @@
-#files
-/files
-
-# Environment variables
-.env
-
 # compiled output
 /dist
 /node_modules
