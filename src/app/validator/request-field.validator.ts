@@ -2,29 +2,29 @@ import { HttpException, HttpStatus } from "@nestjs/common";
 
 export class RequestFieldValidator {
 
-  public static validateField(requestField: any, fieldName: string, fieldType: string): void {
-    if (fieldType === 'date') {
-      return this.validateFieldDate(requestField, fieldName);
+  public static validateField(field: any, name: string, type: string): void {
+    if (type === 'date') {
+      return this.validateFieldDate(field, name);
     }
 
-    if (!requestField || typeof requestField !== fieldType) {
+    if (!field || typeof field !== type) {
       throw new HttpException(
-        'Invalid request field `' + fieldName + '`',
+        'Invalid request field `' + name + '`',
         HttpStatus.BAD_REQUEST, 
       );
     }
   }
 
-  private static validateFieldDate(requestField: any, fieldName: string): void {
-    if (!requestField || typeof requestField !== 'string') {
+  private static validateFieldDate(field: any, name: string): void {
+    if (!field || typeof field !== 'string') {
       throw new HttpException(
-        'Invalid request field date `' + fieldName + '`',
+        'Invalid request field date `' + name + '`',
         HttpStatus.BAD_REQUEST, 
       );
     }
-    if (isNaN(Date.parse(requestField)) == true) {
+    if (isNaN(Date.parse(field)) == true) {
       throw new HttpException(
-        'Invalid request field date `' + fieldName + '`',
+        'Invalid request field date `' + name + '`',
         HttpStatus.BAD_REQUEST, 
       );
     }

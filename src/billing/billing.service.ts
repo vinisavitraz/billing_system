@@ -11,7 +11,7 @@ import { PaymentEntity } from './entity/payment.entity';
 import { billing, payment } from '@prisma/client';
 import { ExecutePaymentResponse } from './response/execute-payment.response';
 import { MailService } from 'src/mail/mail.service';
-import { ArgumentValidator } from 'src/app/validator/argument.validator';
+import { InvalidArgumentValidator } from 'src/app/validator/invalid-argument.validator';
 import { BillingStatus, JobStatus } from 'src/app/enum/status.enum';
 import { Queue } from 'src/app/enum/queue.enum';
 
@@ -70,7 +70,7 @@ export class BillingService {
   }
 
   public async scheduleReadCSVJob(fileName: string): Promise<SaveBillingsFileResponse> {
-    ArgumentValidator.validate(fileName, 'fileName', 'string');
+    InvalidArgumentValidator.validate(fileName, 'fileName', 'string');
 
     await this.jobService.createJob(Queue.READ_CSV, fileName);
     
