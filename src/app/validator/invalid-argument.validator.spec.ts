@@ -55,7 +55,7 @@ describe('InvalidArgumentValidator', () => {
     },
   ];
 
-  describe.each(mockInvalidData)(`Test invalid argument validator with invalid argument`, (mockArgument) => {
+  describe.each(mockInvalidData)(`test invalid argument validator with invalid argument`, (mockArgument) => {
     it('should throw exception for argument `' + mockArgument.name + '`', () => {
       expect(() => { InvalidArgumentValidator.validate(mockArgument.argument, mockArgument.name, mockArgument.type) }).toThrow(InvalidArgumentException);
     });

@@ -16,6 +16,7 @@ export class MailService {
     InvalidArgumentValidator.validate(billingId, 'billingId', 'string');
     InvalidArgumentValidator.validate(billingTo, 'billingTo', 'string');
     InvalidArgumentValidator.validate(billingAmount, 'billingAmount', 'number');
+    InvalidArgumentValidator.validateDate(billingDueDate, 'billingDueDate');
 
     const dueDateMessage: string = this.builDueDateMessage(billingDueDate);
     const mailEntity: MailEntity = new MailEntity(
@@ -38,6 +39,7 @@ export class MailService {
     InvalidArgumentValidator.validate(billingId, 'billingId', 'string');
     InvalidArgumentValidator.validate(billingTo, 'billingTo', 'string');
     InvalidArgumentValidator.validate(billingAmount, 'billingAmount', 'number');
+    InvalidArgumentValidator.validateDate(billingDueDate, 'billingDueDate');
     
     const dueDateMessage: string = this.builDueDateMessage(billingDueDate);
     const mailEntity: MailEntity = new MailEntity(
