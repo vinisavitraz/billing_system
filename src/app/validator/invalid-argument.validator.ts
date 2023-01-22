@@ -20,4 +20,15 @@ export class InvalidArgumentValidator {
     }
   }
 
+  public static validateDate(argument: Date, name: string): void {
+    if (!argument) {
+      throw new InvalidArgumentException('Invalid argument `' + name + '`');
+    }
+    
+    if (isNaN(argument.getTime()) == true) {
+      throw new InvalidArgumentException('Invalid argument date `' + name + '`');
+    }
+  
+  }
+
 }
