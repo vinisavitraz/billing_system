@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { InvalidArgumentException } from 'src/app/exception/invalid-argument.exception';
 import { DatabaseService } from 'src/database/database.service';
 import { JobEntity } from './entity/job.entity';
 import { JobService } from './job.service';
 
 describe('JobService', () => {
   let service: JobService;
-  let databaseService: DatabaseService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -13,14 +13,32 @@ describe('JobService', () => {
     }).compile();
 
     service = module.get<JobService>(JobService);
-    databaseService = module.get<DatabaseService>(DatabaseService);
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
 
-  describe('test create job', () => {
+  const mockCreateJobInvalidArguments = [
+    {
+      queue: '',
+      reference: '8291',
+    },
+    {
+      queue: 'test_queue',
+      reference: '',
+    },
+  ];
+
+  describe.each(mockCreateJobInvalidArguments)('test create job with invalid arguments', (mockArgument) => {
+    it('should throw invalid argument exception', async () => {
+      await expect(service.createJob(mockArgument.queue, mockArgument.reference))
+        .rejects
+        .toThrow(InvalidArgumentException);        
+    });
+  });
+
+  describe('test create job with valid arguments', () => {
     it('should create job with the expected queue and reference', async () => {
       const repositorySpy = jest.spyOn(service.repository, 'createJob').mockImplementation(async (queue: string, reference: string) => {
         return new JobEntity(1, queue, reference, 'pending');
@@ -31,6 +49,14 @@ describe('JobService', () => {
       expect(repositorySpy).toHaveBeenCalledWith('test_queue', '1');
       expect(jobEntity.queue).toEqual('test_queue');
       expect(jobEntity.reference).toEqual('1');
+    });
+  });
+
+  describe('test get pending jobs with invalid queue', () => {
+    it('should throw invalid argument exception', async () => {
+      await expect(service.getPendingJobsFromQueue(''))
+        .rejects
+        .toThrow(InvalidArgumentException);        
     });
   });
   
@@ -58,6 +84,25 @@ describe('JobService', () => {
   
       expect(repositorySpy).toHaveBeenCalledWith('test_queue');
       expect(pendingJobs.length).toEqual(0);
+    });
+  });
+
+  const mockUpdateJobStatusInvalidArguments = [
+    {
+      jobId: 0,
+      newStatus: 'executed',
+    },
+    {
+      jobId: 10,
+      newStatus: '',
+    },
+  ];
+
+  describe.each(mockUpdateJobStatusInvalidArguments)('test update job status with invalid arguments', (mockArgument) => {
+    it('should throw invalid argument exception', async () => {
+      await expect(service.updateJobStatus(mockArgument.jobId, mockArgument.newStatus))
+        .rejects
+        .toThrow(InvalidArgumentException);        
     });
   });
 
