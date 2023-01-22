@@ -31,114 +31,144 @@ describe('BillingController', () => {
     expect(controller).toBeDefined();
   });
 
-  // describe('POST /billing ', () => {
-  //   it('should call service with the expected file name', () => {
-  //     const serviceSpy = jest.spyOn(service, 'scheduleReadCSVJob').mockImplementation(async () => {
-  //       return new SaveBillingsFileResponse('Added to queue');
-  //     });
-  //     const mockedFile: Express.Multer.File = {
-  //       fieldname: 'billings',
-  //       originalname: 'billings.csv',
-  //       mimetype: 'text/csv',
-  //       path: 'something',
-  //       buffer: Buffer.from('one,two,three'),
-  //     } as Express.Multer.File;
+  describe('POST /billing ', () => {
+    it('should call service with the expected file name', async () => {
+      const serviceSpy = jest.spyOn(service, 'scheduleReadCSVJob').mockImplementation(async () => {
+        return new SaveBillingsFileResponse('Added to queue');
+      });
+      const mockedFile: Express.Multer.File = {
+        fieldname: 'billings',
+        originalname: 'billings.csv',
+        mimetype: 'text/csv',
+        path: 'something',
+        buffer: Buffer.from('one,two,three'),
+        filename: 'filename'
+      } as Express.Multer.File;
   
-  //     controller.saveBillingsFile(mockedFile);
+      await controller.saveBillingsFile(mockedFile);
   
-  //     expect(serviceSpy).toHaveBeenCalledWith(mockedFile.filename);
-  //   });
-  // });
-
-
-  describe('POST /billing ', () => {});
-
-  it('should call service with the expected payment entity', () => {
-    const serviceSpy = jest.spyOn(service, 'executePayment').mockImplementation(async () => {
-      return new ExecutePaymentResponse(BillingStatus.PAID);
+      expect(serviceSpy).toHaveBeenCalledWith(mockedFile.filename);
     });
-    const requestBody: ExecutePaymentRequest = new ExecutePaymentRequest(
-      '8291',
-      '2022-06-09 10:00:00',
-      100000.00,
-      'John Doe',
-    );
-    const expectedPaymentEntity: PaymentEntity = new PaymentEntity(
-      '8291',
-      new Date('2022-06-09 10:00:00'),
-      100000.00,
-      'John Doe',
-    );
-
-    controller.executePayment(requestBody);
-
-    expect(serviceSpy).toHaveBeenCalledWith(expectedPaymentEntity);
   });
 
-  it('should validate request body and not throw exception', () => {
-    const executePaymentRequest: ExecutePaymentRequest = new ExecutePaymentRequest(
-      '8291',
-      '2022-06-09 10:00:00',
-      100000.00,
-      'John Doe',
-    );
-
-    expect(() => { controller['validateRequestBody'](executePaymentRequest); }).not.toThrow(HttpException);
+  describe('POST /billing without filename', () => {
+    it('should throw bad request exception', async () => {
+      const serviceSpy = jest.spyOn(service, 'scheduleReadCSVJob').mockImplementation(async () => {
+        return new SaveBillingsFileResponse('Added to queue');
+      });
+      const mockedFile: Express.Multer.File = {
+        buffer: Buffer.from('one,two,three'),
+        filename: ''
+      } as Express.Multer.File;
+  
+      await expect(controller.saveBillingsFile(mockedFile))
+        .rejects
+        .toThrow(HttpException); 
+    });
   });
 
-  it('should validate request body parameter `debtId` and throw exception', () => {
-    const executePaymentRequest: ExecutePaymentRequest = new ExecutePaymentRequest(
-      123,
-      '2022-06-09 10:00:00',
-      100,
-      'John Doe',
-    );
+  describe('POST /billing/pay ', () => {
+    it('should call service with the expected payment entity', async () => {
+      const serviceSpy = jest.spyOn(service, 'executePayment').mockImplementation(async () => {
+        return new ExecutePaymentResponse(BillingStatus.PAID);
+      });
+      const requestBody: ExecutePaymentRequest = new ExecutePaymentRequest(
+        '8291',
+        '2022-06-09 10:00:00',
+        100000.00,
+        'John Doe',
+      );
+      const expectedPaymentEntity: PaymentEntity = new PaymentEntity(
+        '8291',
+        new Date('2022-06-09 10:00:00'),
+        100000.00,
+        'John Doe',
+      );
 
-    expect(() => { controller['validateRequestBody'](executePaymentRequest); }).toThrow('Invalid request field `debtId`');
+      await controller.executePayment(requestBody);
+
+      expect(serviceSpy).toHaveBeenCalledWith(expectedPaymentEntity);
+    });
   });
 
-  it('should validate request body parameter `paidAt` and throw exception', () => {
-    const executePaymentRequest: ExecutePaymentRequest = new ExecutePaymentRequest(
-      '8291',
-      'abc',
-      100,
-      'John Doe',
-    );
+  const mockRequestInvalidFields = [
+    {
+      debtId: 123,
+      paidAt: '2023-01-30 10:00:00',
+      paidAmount: 100,
+      paidBy: 'John Doe',
+      expectedMessage: 'Invalid request field `debtId`',
+    },
+    {
+      debtId: '8291',
+      paidAt: 'abc',
+      paidAmount: 100,
+      paidBy: 'John Doe',
+      expectedMessage: 'Invalid request field date `paidAt`',
+    },
+    {
+      debtId: '8291',
+      paidAt: 123,
+      paidAmount: 100,
+      paidBy: 'John Doe',
+      expectedMessage: 'Invalid request field date `paidAt`',
+    },
+    {
+      debtId: '8291',
+      paidAt: '2023-01-30 10:00:00',
+      paidAmount: 'abc',
+      paidBy: 'John Doe',
+      expectedMessage: 'Invalid request field `paidAmount`',
+    },
+    {
+      debtId: '8291',
+      paidAt: '2023-01-30 10:00:00',
+      paidAmount: 100,
+      paidBy: 12,
+      expectedMessage: 'Invalid request field `paidBy`',
+    },
+  ];
 
-    expect(() => { controller['validateRequestBody'](executePaymentRequest); }).toThrow('Invalid request field date `paidAt`');
+  describe.each(mockRequestInvalidFields)('POST /billing/pay with invalid fields', (mockRequest) => {
+    it('should throw exception for request field', async () => {
+      const executePaymentRequest: ExecutePaymentRequest = new ExecutePaymentRequest(
+        mockRequest.debtId,
+        mockRequest.paidAt,
+        mockRequest.paidAmount,
+        mockRequest.paidBy,
+      );
+      
+      await expect(controller.executePayment(executePaymentRequest))
+        .rejects
+        .toThrow(mockRequest.expectedMessage);
+    });
   });
 
-  it('should validate request body parameter `paidAt` with number and throw exception', () => {
-    const executePaymentRequest: ExecutePaymentRequest = new ExecutePaymentRequest(
-      '8291',
-      123,
-      100,
-      'John Doe',
-    );
-
-    expect(() => { controller['validateRequestBody'](executePaymentRequest); }).toThrow('Invalid request field date `paidAt`');
+  describe('test validate request body with valid fields ', () => {
+    it('should validate request body and not throw exception', () => {
+      const executePaymentRequest: ExecutePaymentRequest = new ExecutePaymentRequest(
+        '8291',
+        '2022-06-09 10:00:00',
+        100000.00,
+        'John Doe',
+      );
+  
+      expect(() => { controller['validateRequestBody'](executePaymentRequest); }).not.toThrow(HttpException);
+    });
   });
 
-  it('should validate request body parameter `paidAmount` and throw exception', () => {
-    const executePaymentRequest: ExecutePaymentRequest = new ExecutePaymentRequest(
-      '8291',
-      '2022-06-09 10:00:00',
-      'abc',
-      'John Doe',
-    );
-
-    expect(() => { controller['validateRequestBody'](executePaymentRequest); }).toThrow('Invalid request field `paidAmount`');
-  });
-
-  it('should validate request body parameter `paidBy` and throw exception', () => {
-    const executePaymentRequest: ExecutePaymentRequest = new ExecutePaymentRequest(
-      '8291',
-      '2022-06-09 10:00:00',
-      100,
-      12,
-    );
-
-    expect(() => { controller['validateRequestBody'](executePaymentRequest); }).toThrow('Invalid request field `paidBy`');
+  describe.each(mockRequestInvalidFields)('test validate request body with invalid fields', (mockRequest) => {
+    it('should throw exception for request field', () => {
+      const executePaymentRequest: ExecutePaymentRequest = new ExecutePaymentRequest(
+        mockRequest.debtId,
+        mockRequest.paidAt,
+        mockRequest.paidAmount,
+        mockRequest.paidBy,
+      );
+  
+      expect(() => { controller['validateRequestBody'](executePaymentRequest); })
+      .toThrow(mockRequest.expectedMessage);
+    });
   });
 
 });
