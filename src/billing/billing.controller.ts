@@ -1,7 +1,6 @@
-import { Body, Controller, FileTypeValidator, ParseFilePipe, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
-import path from 'path';
-import LocalFilesInterceptor from 'src/app/api/interceptor/local-files.interceptor';
-import { RequestFieldValidator } from 'src/app/api/validator/request-field.validator';
+import { Body, Controller, FileTypeValidator, HttpException, HttpStatus, ParseFilePipe, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import LocalFilesInterceptor from 'src/app/interceptor/local-files.interceptor';
+import { RequestFieldValidator } from 'src/app/validator/request-field.validator';
 import { BillingService } from './billing.service';
 import { PaymentEntity } from './entity/payment.entity';
 import { ExecutePaymentRequest } from './request/execute-payment.request';
@@ -19,20 +18,20 @@ export class BillingController {
     path: '/csv'
   }))
   public async saveBillingsFile(
-    @UploadedFile(
-      //new ParseFilePipe({validators: [new FileTypeValidator({ fileType: 'text/csv' }),],}),
-      ) 
+    @UploadedFile(new ParseFilePipe({validators: [new FileTypeValidator({ fileType: 'text/csv' }),],}),) 
     fileCSV: Express.Multer.File
   ): Promise<SaveBillingsFileResponse> {
-    console.log(fileCSV);
-    
-    return await this.billingService.scheduleReadCSVJob('');
-  }
+    if (!fileCSV) {
+      throw new HttpException(
+        'Invalid request file',
+        HttpStatus.BAD_REQUEST, 
+      );
+    }
 
-  public validateImageType(filename: string): boolean {
-    const fileExtension = path.extname(filename).replace('.', '');
-    return fileExtension === 'csv'; 
-}
+    RequestFieldValidator.validateField(fileCSV.filename, 'fileName', 'string');
+    
+    return await this.billingService.scheduleReadCSVJob(fileCSV.filename);
+  }
 
   @Post('pay')
   public async executePayment(@Body() executePaymentRequest: ExecutePaymentRequest): Promise<ExecutePaymentResponse> {

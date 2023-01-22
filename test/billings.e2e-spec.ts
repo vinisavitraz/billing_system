@@ -24,14 +24,13 @@ describe('Billings (e2e)', () => {
       .set('Content-Type', 'multipart/form-data')
       .attach('billings', './test/mocks/data/test.csv')
       .expect(201)
-      .expect('{"status":"Added to queue"}');
+      .expect('{"status":"Added to processing queue. Billings will be created in a few seconds."}');
 
     const scheduledJob: job | null = await prisma.job.findFirst({
       where: {
         queue: 'read_csv',
       },
     });
-
 
     expect(scheduledJob).not.toBeNull();
     expect(scheduledJob!.queue).toEqual('read_csv');

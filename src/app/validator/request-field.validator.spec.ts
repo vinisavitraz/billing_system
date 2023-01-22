@@ -21,7 +21,7 @@ describe('RequestFieldValidator', () => {
     },
   ];
 
-  describe.each(mockValidData)(`Request fields with valid data`, (mockRequest) => {
+  describe.each(mockValidData)(`Test field validator with valid data`, (mockRequest) => {
     it('should not throw exception for field `' + mockRequest.fieldName + '`', () => {
       expect(() => { RequestFieldValidator.validateField(mockRequest.requestField, mockRequest.fieldName, mockRequest.fieldType) }).not.toThrow(HttpException);
     });
@@ -60,7 +60,7 @@ describe('RequestFieldValidator', () => {
     },
   ];
 
-  describe.each(mockInvalidData)(`Request fields with invalid data`, (mockRequest) => {
+  describe.each(mockInvalidData)(`Test field validator with invalid data`, (mockRequest) => {
     it('should throw exception for field `' + mockRequest.fieldName + '`', () => {
       expect(() => { RequestFieldValidator.validateField(mockRequest.requestField, mockRequest.fieldName, mockRequest.fieldType) }).toThrow(HttpException);
     });

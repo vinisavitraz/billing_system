@@ -11,15 +11,13 @@ import { PaymentEntity } from './entity/payment.entity';
 import { billing, payment } from '@prisma/client';
 import { ExecutePaymentResponse } from './response/execute-payment.response';
 import { MailService } from 'src/mail/mail.service';
+import { ArgumentValidator } from 'src/app/validator/argument.validator';
+import { BillingStatus, JobStatus } from 'src/app/enum/status.enum';
+import { Queue } from 'src/app/enum/queue.enum';
 
 @Injectable()
 export class BillingService {
 
-  public static PENDING_PAYMENT: string = 'pending_payment';
-  public static CANCELED: string = 'canceled';
-  public static EXPIRED: string = 'expired';
-  public static PAID: string = 'paid';
-  public static EXECUTED: string = 'executed';
   public static CSV_FILES_BASE_PATH: string = './files/csv/';
   public static BATCH_SIZE: number = 250;
   public static REMAINING_DAYS_TO_REMINDER_PAYMENT: number = 1;
@@ -36,12 +34,12 @@ export class BillingService {
 
   @Cron(CronExpression.EVERY_5_SECONDS)
   private async executeReadCSVPendingJobs(): Promise<void> {
-    const pendingJobs: JobEntity[] = await this.jobService.getPendingJobsFromQueue(JobService.READ_CSV_QUEUE);
+    const pendingJobs: JobEntity[] = await this.jobService.getPendingJobsFromQueue(Queue.READ_CSV);
     
     for (let i = 0; i < pendingJobs.length; i++) {
       const pendingJob: JobEntity = pendingJobs[i];
       await this.createBillingsFromCSVFile(pendingJob.reference);
-      await this.jobService.updateJobStatus(pendingJob.id, BillingService.EXECUTED);
+      await this.jobService.updateJobStatus(pendingJob.id, JobStatus.EXECUTED);
     }
   }
   
@@ -67,22 +65,20 @@ export class BillingService {
     
     for (let i = 0; i < expiredBillings.length; i++) {
       const billing: billing = expiredBillings[i];
-      await this.repository.updateBillingStatus(billing.id, BillingService.EXPIRED);
+      await this.repository.updateBillingStatus(billing.id, BillingStatus.EXPIRED);
     }
   }
 
   public async scheduleReadCSVJob(fileName: string): Promise<SaveBillingsFileResponse> {
-    await this.jobService.createJob(JobService.READ_CSV_QUEUE, fileName);
+    ArgumentValidator.validate(fileName, 'fileName', 'string');
+
+    await this.jobService.createJob(Queue.READ_CSV, fileName);
     
-    return new SaveBillingsFileResponse('Added to queue');
+    return new SaveBillingsFileResponse('Added to processing queue. Billings will be created in a few seconds.');
   }
 
   public async executePayment(paymentEntity: PaymentEntity): Promise<ExecutePaymentResponse> {
-    let billing: billing | null = await this.findBillingByIdOrCry(paymentEntity.debtId);
-
-    this.validateBillingState(billing, paymentEntity);
-    this.validateBillingAndPaymentAmounts(billing.amount.toNumber(), paymentEntity.paidAmount);
-
+    const billing: billing | null = await this.findPendingPaymentBillingByIdOrCry(paymentEntity);
     const payments: payment[] = await this.repository.findBillingPayments(billing.id);
     let paymentRemainingAmount: number = billing.amount.toNumber();
 
@@ -94,14 +90,14 @@ export class BillingService {
 
     if (paymentEntity.paidAmount === paymentRemainingAmount) {
       await this.createPayment(billing.id, paymentEntity);
-      await this.repository.updateBillingStatus(billing.id, BillingService.PAID);
+      await this.repository.updateBillingStatus(billing.id, BillingStatus.PAID);
 
-      return new ExecutePaymentResponse(BillingService.PAID);
+      return new ExecutePaymentResponse(BillingStatus.PAID);
     }
 
     await this.createPayment(billing.id, paymentEntity);
 
-    return new ExecutePaymentResponse(BillingService.PENDING_PAYMENT);
+    return new ExecutePaymentResponse(BillingStatus.PENDING_PAYMENT);
   }
 
   private async createBillingsFromCSVFile(fileName: string): Promise<void> {
@@ -112,6 +108,7 @@ export class BillingService {
     
     if (fileRowsJson.length === 0) {
       console.log('Invalid file content.');
+      return;
     }
 
     const billingsInput: object[] = await this.mapFileContentToBillings(fileRowsJson);
@@ -141,15 +138,18 @@ export class BillingService {
     console.log('File processed with success.');
   }
 
-  private async findBillingByIdOrCry(billingId: string): Promise<billing> {
-    const billing: billing | null = await this.repository.findBillingById(billingId);
+  private async findPendingPaymentBillingByIdOrCry(paymentEntity: PaymentEntity): Promise<billing> {
+    const billing: billing | null = await this.repository.findBillingById(paymentEntity.debtId);
 
     if (!billing) {
       throw new HttpException(
-        'Billing with ID `' + billingId + '` not found.',
+        'Billing with ID `' + paymentEntity.debtId + '` not found.',
         HttpStatus.NOT_FOUND, 
       );
     }
+
+    this.validateBillingState(billing, paymentEntity);
+    this.validateBillingAndPaymentAmounts(billing.amount.toNumber(), paymentEntity.paidAmount);
 
     return billing;
   }
@@ -162,7 +162,7 @@ export class BillingService {
       );
     }
 
-    if (billing.status !== BillingService.PENDING_PAYMENT) {
+    if (billing.status !== BillingStatus.PENDING_PAYMENT) {
       throw new HttpException(
         'Debt not allowed to receive payments.',
         HttpStatus.UNPROCESSABLE_ENTITY, 
@@ -234,7 +234,7 @@ export class BillingService {
       id: fileRow['debtId'],
       amount: Number(fileRow['debtAmount']),
       due_date: new Date(fileRow['debtDueDate'] + ' 23:59:59'),
-      status: BillingService.PENDING_PAYMENT,
+      status: BillingStatus.PENDING_PAYMENT,
     };
   }
 

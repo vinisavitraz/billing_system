@@ -1,4 +1,5 @@
 import { job } from "@prisma/client";
+import { JobStatus } from "src/app/enum/status.enum";
 import { DatabaseService } from "src/database/database.service";
 import { JobEntity } from "./entity/job.entity";
 
@@ -18,7 +19,7 @@ export class JobRepository {
       data: {
         queue: queue,
         reference: reference,
-        status: 'pending',
+        status: JobStatus.PENDING,
       },
     });
 
@@ -29,7 +30,7 @@ export class JobRepository {
     const jobs: job[] = await this.connection.job.findMany({
       where: {
         queue: queue,
-        status: 'pending',
+        status: JobStatus.PENDING,
       },
     });
 

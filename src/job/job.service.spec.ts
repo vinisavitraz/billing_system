@@ -20,24 +20,45 @@ describe('JobService', () => {
     expect(service).toBeDefined();
   });
 
-  it('should call repository create job with the expected queue and reference', () => {
-    const repositorySpy = jest.spyOn(service.repository, 'createJob').mockImplementation(async () => {
-      return new JobEntity(1, 'test_queue', '1', 'pending');
+  describe('test create job', () => {
+    it('should create job with the expected queue and reference', async () => {
+      const repositorySpy = jest.spyOn(service.repository, 'createJob').mockImplementation(async (queue: string, reference: string) => {
+        return new JobEntity(1, queue, reference, 'pending');
+      });
+      
+      const jobEntity: JobEntity = await service.createJob('test_queue', '1');
+      
+      expect(repositorySpy).toHaveBeenCalledWith('test_queue', '1');
+      expect(jobEntity.queue).toEqual('test_queue');
+      expect(jobEntity.reference).toEqual('1');
     });
-    
-    service.createJob('test_queue', '1');
-
-    expect(repositorySpy).toHaveBeenCalledWith('test_queue', '1');
+  });
+  
+  describe('test get pending jobs from queue', () => {
+    it('should get pending jobs from the expected queue', async () => {
+      const repositorySpy = jest.spyOn(service.repository, 'getPendingJobsFromQueue').mockImplementation(async (queue: string) => {
+        return [new JobEntity(1, queue, '1', 'pending')];
+      });
+      
+      const pendingJobs: JobEntity[] = await service.getPendingJobsFromQueue('test_queue');
+  
+      expect(repositorySpy).toHaveBeenCalledWith('test_queue');
+      expect(pendingJobs[0].queue).toEqual('test_queue');
+      expect(pendingJobs[0].status).toEqual('pending');
+    });
   });
 
-  it('should call repository get pending jobs from the expected queue', () => {
-    const repositorySpy = jest.spyOn(service.repository, 'getPendingJobsFromQueue').mockImplementation(async (queue: string) => {
-      return [new JobEntity(1, 'test_queue', '1', 'pending')];
+  describe('test get pending jobs from empty queue', () => {
+    it('should get empty response', async () => {
+      const repositorySpy = jest.spyOn(service.repository, 'getPendingJobsFromQueue').mockImplementation(async (queue: string) => {
+        return [];
+      });
+      
+      const pendingJobs: JobEntity[] = await service.getPendingJobsFromQueue('test_queue');
+  
+      expect(repositorySpy).toHaveBeenCalledWith('test_queue');
+      expect(pendingJobs.length).toEqual(0);
     });
-    
-    service.getPendingJobsFromQueue('test_queue');
-
-    expect(repositorySpy).toHaveBeenCalledWith('test_queue');
   });
 
   it('should call repository to update job status with the expected id and new status', () => {

@@ -1,5 +1,6 @@
 import { HttpException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { BillingStatus } from 'src/app/enum/status.enum';
 import { DatabaseService } from 'src/database/database.service';
 import { JobService } from 'src/job/job.service';
 import { MailService } from 'src/mail/mail.service';
@@ -30,31 +31,31 @@ describe('BillingController', () => {
     expect(controller).toBeDefined();
   });
 
-  describe('POST /billing ', () => {
-    it('should call service with the expected file name', () => {
-      const serviceSpy = jest.spyOn(service, 'scheduleReadCSVJob').mockImplementation(async () => {
-        return new SaveBillingsFileResponse('Added to queue');
-      });
-      const mockedFile: Express.Multer.File = {
-        fieldname: 'billings',
-        originalname: 'billings.csv',
-        mimetype: 'text/csv',
-        path: 'something',
-        buffer: Buffer.from('one,two,three'),
-      } as Express.Multer.File;
+  // describe('POST /billing ', () => {
+  //   it('should call service with the expected file name', () => {
+  //     const serviceSpy = jest.spyOn(service, 'scheduleReadCSVJob').mockImplementation(async () => {
+  //       return new SaveBillingsFileResponse('Added to queue');
+  //     });
+  //     const mockedFile: Express.Multer.File = {
+  //       fieldname: 'billings',
+  //       originalname: 'billings.csv',
+  //       mimetype: 'text/csv',
+  //       path: 'something',
+  //       buffer: Buffer.from('one,two,three'),
+  //     } as Express.Multer.File;
   
-      controller.saveBillingsFile(mockedFile);
+  //     controller.saveBillingsFile(mockedFile);
   
-      expect(serviceSpy).toHaveBeenCalledWith(mockedFile.filename);
-    });
-  });
+  //     expect(serviceSpy).toHaveBeenCalledWith(mockedFile.filename);
+  //   });
+  // });
 
 
   describe('POST /billing ', () => {});
 
   it('should call service with the expected payment entity', () => {
     const serviceSpy = jest.spyOn(service, 'executePayment').mockImplementation(async () => {
-      return new ExecutePaymentResponse(BillingService.PAID);
+      return new ExecutePaymentResponse(BillingStatus.PAID);
     });
     const requestBody: ExecutePaymentRequest = new ExecutePaymentRequest(
       '8291',

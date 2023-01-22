@@ -1,6 +1,6 @@
 import { billing, payment } from "@prisma/client";
+import { BillingStatus } from "src/app/enum/status.enum";
 import { DatabaseService } from "src/database/database.service";
-import { BillingService } from "./billing.service";
 
 export class BillingRepository {
 
@@ -21,7 +21,7 @@ export class BillingRepository {
   public async findExpiredBillings(): Promise<billing[]> {
     return await this.connection.billing.findMany({
       where: {
-         status: BillingService.PENDING_PAYMENT,
+         status: BillingStatus.PENDING_PAYMENT,
          due_date: {lte: new Date()}, 
       },
     });
@@ -30,7 +30,7 @@ export class BillingRepository {
   public async findExpiringBillings(remindAfterDate: Date): Promise<billing[]> {
     return await this.connection.billing.findMany({
       where: {
-         status: BillingService.PENDING_PAYMENT,
+         status: BillingStatus.PENDING_PAYMENT,
          AND: [
           {
             due_date: {gt: remindAfterDate}, 

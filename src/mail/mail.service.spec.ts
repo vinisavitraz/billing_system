@@ -17,85 +17,81 @@ describe('MailService', () => {
     expect(service).toBeDefined();
   });
 
-  it('should send invoice created mail', () => {
-    const consoleSpy: any = jest.spyOn(console, 'log');
-    const expectedBodyMail: string = `Olá testBillingTo!\nO boleto '123' foi gerado no seu nome com o valor de R$100.00.\nVoce tem até 17/01 para realizar o pagamento. Após essa data, o boleto será cancelado.`;
-    const expectedLogMail: string = `
-      SendTo: testMailTo \n
-      Subject: Boleto gerado com sucesso \n
-      Body: ${expectedBodyMail} \n
-    `;
-    
-    service['sendInvoiceCreatedMail'](
-      'testMailTo',
-      '123',
-      'testBillingTo',
-      100,
-      new Date('2023-01-17 23:59:59')
-    );
+  describe('Test send invoice created mail', () => {
+    it('should log expected invoice created mail', () => {
+      const consoleSpy: any = jest.spyOn(console, 'log');
+      const expectedBodyMail: string = `Olá testBillingTo! O boleto '123' foi gerado no seu nome com o valor de R$100.00. Voce tem até 17/01 para realizar o pagamento. Após essa data, o boleto será cancelado.`;
+      const expectedMail: MailEntity = new MailEntity('testMailTo', 'Boleto gerado com sucesso', expectedBodyMail);
 
-    expect(consoleSpy).toHaveBeenCalledWith(expectedLogMail);    
+      service['sendInvoiceCreatedMail'](
+        'testMailTo',
+        '123',
+        'testBillingTo',
+        100,
+        new Date('2023-01-17 23:59:59')
+      );
+  
+      expect(consoleSpy).toHaveBeenCalledWith(expectedMail);    
+    });
+  });
+  
+  describe('Test send payment reminder mail', () => {
+    it('should log expected payment reminder mail', () => {
+      const consoleSpy: any = jest.spyOn(console, 'log');
+      const expectedBodyMail: string = `Olá testBillingTo! Não esqueça de realizar o pagamento do boleto '123' no valor de R$100.00. Voce tem até 17/01 para realizar o pagamento. Após essa data, o boleto será cancelado.`;
+      const expectedMail: MailEntity = new MailEntity('testMailTo', 'Lembrete: realize o pagamento do seu boleto', expectedBodyMail);
+      
+      service['sendPaymentReminderMail'](
+        'testMailTo',
+        '123',
+        'testBillingTo',
+        100,
+        new Date('2023-01-17 23:59:59')
+      );
+  
+      expect(consoleSpy).toHaveBeenCalledWith(expectedMail);    
+    });
   });
 
-  it('should send payment reminder mail', () => {
-    const consoleSpy: any = jest.spyOn(console, 'log');
-    const expectedBodyMail: string = `Olá testBillingTo!\nNão esqueça de realizar o pagamento do boleto '123' no valor de R$100.00.\nVoce tem até 17/01 para realizar o pagamento. Após essa data, o boleto será cancelado.`;
-    const expectedLogMail: string = `
-      SendTo: testMailTo \n
-      Subject: Lembrete: realize o pagamento do seu boleto \n
-      Body: ${expectedBodyMail} \n
-    `;
-    
-    service['sendPaymentReminderMail'](
-      'testMailTo',
-      '123',
-      'testBillingTo',
-      100,
-      new Date('2023-01-17 23:59:59')
-    );
-
-    expect(consoleSpy).toHaveBeenCalledWith(expectedLogMail);    
+  describe('Test send mail', () => {
+    it('should log mail content', () => {
+      const consoleSpy: any = jest.spyOn(console, 'log');
+      const mailEntity: MailEntity = new MailEntity('testMailTo', 'testSubject', 'testBody');
+      
+      service['sendMail'](mailEntity);
+  
+      expect(consoleSpy).toHaveBeenCalledWith(mailEntity);    
+    });
   });
+  
+  describe('Test build due date message', () => {
+    it('should build expected due date message', () => {
+      const billingDueDate: Date = new Date('2023-01-17 23:59:59');
+      const expectedDueDateMessage: string = 'Voce tem até 17/01 para realizar o pagamento. Após essa data, o boleto será cancelado.';
+      
+      const dueDateMessage: string = service['builDueDateMessage'](billingDueDate);
+  
+      expect(dueDateMessage).toBe(expectedDueDateMessage);
+    }); 
+  }); 
+  
+  const mockDateStringCases = [
+    {
+      dateInput: 1,
+      expectedFormattedDate: '01',
+    },
+    {
+      dateInput: 10,
+      expectedFormattedDate: '10',
+    },
+  ];
 
-  it('should log mail', () => {
-    const consoleSpy: any = jest.spyOn(console, 'log');
-    const mailEntity: MailEntity = new MailEntity('testMailTo', 'testSubject', 'testBody');
-    const expectedLogMail: string = `
-      SendTo: ${mailEntity.mailTo} \n
-      Subject: ${mailEntity.subject} \n
-      Body: ${mailEntity.body} \n
-    `;
-
-    service['sendMail'](mailEntity);
-
-    expect(consoleSpy).toHaveBeenCalledWith(expectedLogMail);    
+  describe.each(mockDateStringCases)(`Test append zeros to date string`, (dateStringCase) => {
+    it('should append zeros according to expected case', () => {
+      const date: string = service['appendZeroToDateIfNeeded'](dateStringCase.dateInput);
+  
+      expect(date).toBe(dateStringCase.expectedFormattedDate);
+    }); 
   });
-
-  it('should build due date message', () => {
-    const billingDueDate: Date = new Date('2023-01-17 23:59:59');
-    const expectedDueDateMessage: string = 'Voce tem até 17/01 para realizar o pagamento. Após essa data, o boleto será cancelado.';
-    
-    const dueDateMessage: string = service['builDueDateMessage'](billingDueDate);
-
-    expect(dueDateMessage).toBe(expectedDueDateMessage);
-  }); 
-
-  it('should append zero to date', () => {
-    const dateInput: number = 1;
-    const expectedDate: string = '01';
-    
-    const date: string = service['appendZeroToDateIfNeeded'](dateInput);
-
-    expect(date).toBe(expectedDate);
-  }); 
-
-  it('should not append zero to date', () => {
-    const dateInput: number = 10;
-    const expectedDate: string = '10';
-    
-    const date: string = service['appendZeroToDateIfNeeded'](dateInput);
-
-    expect(date).toBe(expectedDate);
-  }); 
   
 });
