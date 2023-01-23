@@ -8,7 +8,6 @@ services:
       - .:/usr/app
     env_file:
       - .env
-    # Run a command against the development stage of the image
     command: npm run start:dev
     ports:
       - 3000:3000

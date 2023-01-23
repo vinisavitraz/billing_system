@@ -1,4 +1,4 @@
-import { Body, Controller, FileTypeValidator, HttpException, HttpStatus, ParseFilePipe, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, HttpException, HttpStatus, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import LocalFilesInterceptor from 'src/app/interceptor/local-files.interceptor';
 import { RequestFieldValidator } from 'src/app/validator/request-field.validator';
 import { BillingService } from './billing.service';
@@ -6,6 +6,8 @@ import { PaymentEntity } from './entity/payment.entity';
 import { ExecutePaymentRequest } from './request/execute-payment.request';
 import { ExecutePaymentResponse } from './response/execute-payment.response';
 import { SaveBillingsFileResponse } from './response/save-billings-file.response';
+import * as path from 'node:path';
+import * as fs from 'fs';
 
 @Controller('billing')
 export class BillingController {
@@ -18,19 +20,31 @@ export class BillingController {
     path: '/csv'
   }))
   public async saveBillingsFile(
-    @UploadedFile(new ParseFilePipe({validators: [new FileTypeValidator({ fileType: 'text/csv' }),],}),) 
-    fileCSV: Express.Multer.File
+    @UploadedFile() file: Express.Multer.File
   ): Promise<SaveBillingsFileResponse> {
-    if (!fileCSV) {
+    if (!file) {
       throw new HttpException(
         'Invalid request file',
         HttpStatus.BAD_REQUEST, 
       );
     }
-
-    RequestFieldValidator.validateField(fileCSV.filename, 'fileName', 'string');
     
-    return await this.billingService.scheduleReadCSVJob(fileCSV.filename);
+    RequestFieldValidator.validateField(file.originalname, 'fileOriginalName', 'string');
+
+    const fileExtension: string = path.extname(file.originalname).replace('.', '');
+
+    if (fileExtension !== 'csv') {
+      RequestFieldValidator.validateField(file.path, 'filePath', 'string');
+      await fs.promises.unlink(file.path);
+      throw new HttpException(
+        'Invalid request file type',
+        HttpStatus.BAD_REQUEST, 
+      );
+    }
+
+    RequestFieldValidator.validateField(file.filename, 'fileName', 'string');
+    
+    return await this.billingService.scheduleReadCSVJob(file.filename);
   }
 
   @Post('pay')

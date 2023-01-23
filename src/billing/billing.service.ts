@@ -128,7 +128,7 @@ export class BillingService {
     billingsInput.forEach((billingInput: any) => {
       this.mailService.sendInvoiceCreatedMail(
         billingInput.email,
-        billingInput.debt_id,
+        billingInput.id,
         billingInput.name,
         billingInput.amount,
         billingInput.due_date,
@@ -211,7 +211,7 @@ export class BillingService {
       try {
         this.validateFileRow(fileRow);
       } catch (error) {
-        console.log('Invalid content. Skipping row ' + i);
+        console.log('Invalid content: ' + error.message + '. Skipping row ' + i);
         continue;
       }
       const billing: billing | null = await this.repository.findBillingById(fileRow['debtId']);
@@ -241,7 +241,7 @@ export class BillingService {
     InvalidArgumentValidator.validate(fileRow['name'], 'name', 'string');
     InvalidArgumentValidator.validate(fileRow['governmentId'], 'governmentId', 'string');
     InvalidArgumentValidator.validate(fileRow['email'], 'email', 'string');
-    InvalidArgumentValidator.validate(fileRow['debtAmount'], 'debtAmount', 'number');
+    InvalidArgumentValidator.validate(Number(fileRow['debtAmount']), 'debtAmount', 'number');
     InvalidArgumentValidator.validateDateString(fileRow['debtDueDate'], 'debtDueDate');
     InvalidArgumentValidator.validate(fileRow['debtId'], 'debtId', 'string');
   }
