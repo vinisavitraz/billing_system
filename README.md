@@ -30,6 +30,12 @@ Entre no diretório do projeto
   cd billing_system
 ```
 
+Validar no arquivo `.env` a variavel de ambiente `DATABASE_URL`
+
+```csv
+  DATABASE_URL="postgresql://postgres:admin@host.docker.internal:5432/billing_system"
+```
+
 Com o docker aberto, inicie os containers
 
 ```bash
@@ -151,7 +157,9 @@ Response (Pagamento parcial - O pagamento vai ficar pendente até receber o valo
 
 Para executar os testes de integração, 2 passos são necessários:
 
-- Alterar a variável de ambiente `DATABASE_URL` no arquivo `.env` para: `postgresql://postgres:admin@localhost:5432/billing_system`
+```csv
+  DATABASE_URL="postgresql://postgres:admin@localhost:5432/billing_system"
+```
 - Executar o comando abaixo com a aplicação rodando (após docker-compose up)
 
 ```bash
