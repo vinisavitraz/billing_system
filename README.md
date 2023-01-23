@@ -73,7 +73,7 @@ Com a aplicação rodando, o acesso a base de dados fica disponível via Postgre
 
 Endpoint 
 
-```http
+```csv
   POST localhost:3000/billing
 ```
 
@@ -85,7 +85,7 @@ Modelo do arquivo CSV
 ```
 Exemplo via curl
 
-```http
+```csv
   curl -F billings=@"/Users/viniciussavitraz/Downloads/mock_data.csv" localhost:3000/billing
 ```
 
@@ -99,7 +99,7 @@ Response
 
 Endpoint 
 
-```http
+```csv
   POST localhost:3000/billing/pay
 ```
 
@@ -116,7 +116,7 @@ Request body
 
 Exemplo via curl
 
-```http
+```csv
   curl --location --request POST localhost:3000/billing/pay \
   --header 'Content-Type: application/json' \
   --data-raw '{
