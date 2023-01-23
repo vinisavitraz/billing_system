@@ -1,102 +1,160 @@
-<h1>Sistema de cobrança</h1>
 
-## Tecnologias :rocket:
+# billing_system
 
-- NestJS (Typescript)
-- MySQL
-- PrismaORM
+Sistema de controle de cobranças
 
-## Rodando o serviço
 
-### Docker
+## Tecnologias
 
-Para rodar a aplicacao, é necessário ter o docker instalado.
+- Typescript (NestJS)
+- Postgres (PrismaORM)
 
-### Comandos utéis: 
+## Funcionalidades
 
-#### Iniciar a aplicacao
+- Receber arquivos CSV e gerar boletos em cima dos dados
+- Enviar emails cobrando os boletos
+- Receber e processar pagamentos para os boletos via webhook
 
-$ docker-compose up -d --build                                
 
-####  Assim que o container estiver rodando, rodar o comando para criar a base de dados:
+## Rodando localmente
 
-$ docker exec billing_system-api-1 npx prisma migrate reset --force
+Clone o projeto
 
-Após isso, a aplicação já está disponível para receber requests
-
-#### Finalizar a aplicação:
-
-$ docker-compose down --remove-orphans      
-
-#### Acesso ao banco de dados
-
-Depois do container estiver rodando, o acesso a base de dados fica disponível via MySQL usando as seguintes credenciais: 
-
-Host: localhost
-Port: 3306
-Database: billing_system
-User: root
-Senha: admin
-
-## Endpoints disponíveis:
-
-#### Criar boletos com arquivo CSV
-
-Exemplo de arquivo: 
-
-``` mock_data.csv
-name,governmentId,email,debtAmount,debtDueDate,debtId
-John [Doe,11111111111,johndoe@kanastra.com.br,1000000.00,2022-10-12,8291](mailto:Doe,11111111111,johndoe@kanastra.com.br,1000000.00,2022-10-12,8291) 
+```bash
+  git clone https://github.com/vinisavitraz/billing_system.git
 ```
 
-Endpoint: POST `/billing`
+Entre no diretório do projeto
 
-Exemplo de request: 
+```bash
+  cd billing_system
+```
 
-curl --location --request POST 'localhost:3000/billing' \
---form 'billings=@"/Users/viniciussavitraz/Downloads/mock_data.csv"'
+Com o docker aberto, inicie os containers
 
-Response:
+```bash
+  docker-compose up
+```
 
-{"status":"Added to queue"}
+Isso vai subir a aplicação e o banco. 
+Após iniciar os containers, se for a primeira vez rodando o serviço, será necessário criar a base de dados
 
-#### Realizar pagamento do boleto
+```bash
+  docker exec billing_system npx prisma migrate reset --force
+```
 
-Após o cadastro de novos boletos, o pagamento fica disponível por esse endpoint
-O valor pode ser pago inteiro ou parcialmente. No caso de parcial, o boleto continua pendente e pode receber novos pagamentos até o vencimento
+Para garantir que o serviço vai conectar a base de dados, reinicie o container principal
 
-Endpoint: POST `/billing/pay`
+```bash
+  docker restart billing_system
+```
 
-Exemplo de request: 
+Agora o projeto está configurado e rodando localmente!
 
-curl --location --request POST 'localhost:3000/billing/pay' \
---header 'Content-Type: application/json' \
---data-raw '{
-  "debtId": "1242",
-  "paidAt": "2023-01-22 10:00:00",
-  "paidAmount": 738,
-  "paidBy": "John Doe"
-}'
+Para finalizar os serviços utilize
 
-Response:
+```bash
+  docker-compose down --remove-orphans
+```
 
+Com a aplicação rodando, o acesso a base de dados fica disponível via Postgres usando as seguintes credenciais: 
+
+- Host: localhost
+- Port: 5432
+- Database: billing_system
+- User: postgres
+- Senha: admin
+
+
+
+## Documentação da API
+
+### Enviar novo arquivo CSV
+
+Endpoint 
+
+```http
+  POST localhost:3000/billing
+```
+
+Modelo do arquivo CSV
+
+```csv
+  name,governmentId,email,debtAmount,debtDueDate,debtId
+  John Doe,11111111111,johndoe@kanastra.com.br,1000000.00,2022-10-12,8291 
+```
+Exemplo via curl
+
+```http
+  curl -F billings=@"/Users/viniciussavitraz/Downloads/mock_data.csv" localhost:3000/billing
+```
+
+Response
+
+```json
+{"status":"Added to processing queue. Billings will be created in a few seconds."}
+```
+
+### Execute o pagamento do boleto
+
+Endpoint 
+
+```http
+  POST localhost:3000/billing/pay
+```
+
+Request body
+
+```json
+{
+	"debtId": "5979",
+	"paidAt": "2023-01-30 10:00:00",
+	"paidAmount": 100,
+	"paidBy": "John Doe"
+}
+```
+
+Exemplo via curl
+
+```http
+  curl --location --request POST localhost:3000/billing/pay \
+  --header 'Content-Type: application/json' \
+  --data-raw '{
+    "debtId": "5979",
+    "paidAt": "2023-01-30 10:00:00",
+    "paidAmount": 100,
+    "paidBy": "John Doe"
+  }'
+```
+
+Response
+
+```json
 {"debtStatus":"paid"}
+```
 
-ou
+Response (Pagamento parcial - O pagamento vai ficar pendente até receber o valor total em pagamentos ou expirar)
 
+```json
 {"debtStatus":"pending_payment"}
+```
 
 ## Testes
 
+### Testes de unidade
 
-# Unit tests
+```bash
+  npm run test
+```
 
-$ npm run test
+### Testes de integração - Executar com a aplicação rodando
 
-# E2E tests
+```bash
+  npm run test:e2e
+```
 
-$ npm run test:e2e --runInBand
 
-# Test coverage
+## Licença
 
-$ npm run test:cov
+[MIT](https://choosealicense.com/licenses/mit/)
+
