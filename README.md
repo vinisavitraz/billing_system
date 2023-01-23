@@ -147,12 +147,16 @@ Response (Pagamento parcial - O pagamento vai ficar pendente até receber o valo
   npm run test
 ```
 
-### Testes de integração - Executar com a aplicação rodando
+### Testes de integração 
+
+Para executar os testes de integração, 2 passos são necessários:
+
+- Alterar a variável de ambiente `DATABASE_URL` no arquivo `.env` para: `postgresql://postgres:admin@localhost:5432/billing_system`
+- Executar o comando abaixo com a aplicação rodando (após docker-compose up)
 
 ```bash
   npm run test:e2e
 ```
-
 
 ## Licença
 
